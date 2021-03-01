@@ -10,11 +10,16 @@ npm install polotno-node
 
 ```js
 const fs = require('fs');
-const { createInstance } = require('./index');
+const { createInstance } = require('polotno-node');
 
 async function run() {
   // create working instance
-  const instance = await createInstance({ key: 'nFA5H9elEytDyPyvKL7T' });
+  const instance = await createInstance({
+    // this is a demo key just for that project
+    // (!) please don't use it in your projects
+    // to create your own API key please go here: https://polotno.dev/cabinet
+    key: 'nFA5H9elEytDyPyvKL7T',
+  });
 
   // load sample json
   const json = JSON.parse(fs.readFileSync('polotno.json'));
@@ -27,6 +32,8 @@ async function run() {
     await store.waitLoading();
     return store.toDataURL();
   }, json);
+  // or the same code, but much shorter:
+  // const url = await instance.jsonToDataURL(json);
 
   // prepare base64 string to save
   var base64Data = url.replace(/^data:image\/png;base64,/, '');
@@ -39,4 +46,5 @@ async function run() {
 }
 
 run();
+
 ```

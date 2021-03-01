@@ -19,5 +19,12 @@ module.exports.createInstance = async ({ key } = {}) => {
     run: async (func, ...args) => {
       return await page.evaluate(func, ...args);
     },
+    jsonToDataURL: async (json) => {
+      return await instance.run(async (json) => {
+        store.loadJSON(json);
+        await store.waitLoading();
+        return store.toDataURL();
+      }, json);
+    },
   };
 };
