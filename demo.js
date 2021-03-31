@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { createInstance } = require('polotno-node');
+const { createInstance } = require('./index');
 
 async function run() {
   // create working instance
@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('polotno.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno2.json'));
 
   // execute loading of JSON and export to image
   // we can't directly use "json" variable inside the run function
