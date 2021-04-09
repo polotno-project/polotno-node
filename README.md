@@ -61,7 +61,7 @@ const imageBase64 = await instance.jsonToImageBase64(json);
 fs.writeFileSync('out.png', imageBase64, 'base64');
 ```
 
-### `instance.jsonToImageBase64(json)`
+### `instance.jsonToPDFBase64(json)`
 
 Export json into base64 string of pdf file.
 
