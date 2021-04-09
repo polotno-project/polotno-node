@@ -14,16 +14,34 @@ module.exports.createInstance = async ({ key } = {}) => {
     `file:${path.join(__dirname, 'dist', 'client.html')}?key=${key}`
   );
 
+  const run = async (func, ...args) => {
+    return await page.evaluate(func, ...args);
+  };
+
   return {
     close: async () => await browser.close(),
-    run: async (func, ...args) => {
-      return await page.evaluate(func, ...args);
-    },
+    run,
     jsonToDataURL: async (json) => {
-      return await instance.run(async (json) => {
+      return await run(async (json) => {
         store.loadJSON(json);
         await store.waitLoading();
         return store.toDataURL();
+      }, json);
+    },
+    jsonToImageBase64: async (json) => {
+      return await run(async (json) => {
+        store.loadJSON(json);
+        await store.waitLoading();
+        const url = store.toDataURL();
+        return url.split('base64,')[1];
+      }, json);
+    },
+    jsonToPDFBase64: async (json) => {
+      return await run(async (json) => {
+        store.loadJSON(json);
+        await store.waitLoading();
+        const url = await store.toPDFDataURL();
+        return url.split('base64,')[1];
       }, json);
     },
   };

@@ -13,20 +13,11 @@ async function run() {
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/polotno2.json'));
 
-  // execute loading of JSON and export to image
-  // we can't directly use "json" variable inside the run function
-  // we MUST pass it as the second argument
-  const url = await instance.run(async (json) => {
-    store.loadJSON(json);
-    await store.waitLoading();
-    return store.toDataURL();
-  }, json);
+  const imageBase64 = await instance.jsonToImageBase64(json);
+  fs.writeFileSync('out.png', imageBase64, 'base64');
 
-  // prepare base64 string to save
-  var base64Data = url.replace(/^data:image\/png;base64,/, '');
-
-  // save it to local file
-  require('fs').writeFileSync('out.png', base64Data, 'base64');
+  const pdfBase64 = await instance.jsonToPDFBase64(json);
+  fs.writeFileSync('out.pdf', pdfBase64, 'base64');
 
   // close instance
   instance.close();

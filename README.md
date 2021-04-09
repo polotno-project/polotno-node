@@ -24,27 +24,50 @@ async function run() {
   // load sample json
   const json = JSON.parse(fs.readFileSync('polotno.json'));
 
-  // execute loading of JSON and export to image
-  // we can't directly use "json" variable inside the run function
-  // we MUST pass it as the second argument
-  const url = await instance.run(async (json) => {
-    store.loadJSON(json);
-    await store.waitLoading();
-    return store.toDataURL();
-  }, json);
-  // or the same code, but much shorter:
-  // const url = await instance.jsonToDataURL(json);
-
-  // prepare base64 string to save
-  var base64Data = url.replace(/^data:image\/png;base64,/, '');
-
-  // save it to local file
-  require('fs').writeFileSync('out.png', base64Data, 'base64');
+  const imageBase64 = await instance.jsonToImageBase64(json);
+  fs.writeFileSync('out.png', imageBase64, 'base64');
 
   // close instance
   instance.close();
 }
 
 run();
+```
 
+## API
+
+### `instance.run()`
+
+Run any Polotno store API directly inside web-page context
+
+```js
+// we can't directly use "json" variable inside the run function
+// we MUST pass it as the second argument
+const url = await instance.run(async (json) => {
+  store.loadJSON(json);
+  await store.waitLoading();
+  return store.toDataURL();
+}, json);
+```
+
+### `instance.jsonToImageBase64(json)`
+
+Export json into base64 string of image.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const imageBase64 = await instance.jsonToImageBase64(json);
+fs.writeFileSync('out.png', imageBase64, 'base64');
+```
+
+### `instance.jsonToImageBase64(json)`
+
+Export json into base64 string of pdf file.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const pdfBase64 = await instance.jsonToPDFBase64(json);
+fs.writeFileSync('out.pdf', pdfBase64, 'base64');
 ```
