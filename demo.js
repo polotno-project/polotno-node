@@ -11,13 +11,15 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno2.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno3.json'));
 
+  console.time('export');
   const imageBase64 = await instance.jsonToImageBase64(json);
   fs.writeFileSync('out.png', imageBase64, 'base64');
+  console.timeEnd('export');
 
-  const pdfBase64 = await instance.jsonToPDFBase64(json);
-  fs.writeFileSync('out.pdf', pdfBase64, 'base64');
+  // const pdfBase64 = await instance.jsonToPDFBase64(json);
+  // fs.writeFileSync('out.pdf', pdfBase64, 'base64');
 
   // close instance
   instance.close();

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rm -rf ./dist && parcel build client.html --public-url ./"
+    "build": "rm -rf ./dist && parcel build ./client.html --public-url ./ && rm ./dist/*js.map "
   },
   "files": [
     "dist",
@@ -14,13 +14,13 @@
   ],
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
-    "polotno": "^0.18.9",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "polotno": "^0.23.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",
   "dependencies": {
-    "puppeteer": "^8.0.0"
+    "puppeteer": "^10.0.0"
   }
 }

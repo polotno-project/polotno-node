@@ -3,3 +3,5 @@ node_modules
 out.png
 package-lock.json
 dist
+.parcel-cache
+*.lock

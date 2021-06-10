@@ -6,8 +6,14 @@ module.exports.createInstance = async ({ key } = {}) => {
   const page = await browser.newPage();
 
   page.on('console', (msg) => {
-    for (let i = 0; i < msg.args().length; ++i)
-      console.log(`${i}: ${msg.args()[i]}`);
+    msg.args().forEach(message => {
+      // skip style information
+      if (message.toString().indexOf('margin') >= 0) {
+        return;
+      }
+      const text = message.toString().replace('JSHandle:', '').replace('%c', '');
+      console.log(text);
+    }); 
   });
 
   await page.goto(
