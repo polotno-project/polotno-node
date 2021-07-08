@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno3.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno.json'));
 
   console.time('export');
   const imageBase64 = await instance.jsonToImageBase64(json);
