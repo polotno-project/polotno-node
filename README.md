@@ -44,6 +44,10 @@ Run any Polotno store API directly inside web-page context
 // we can't directly use "json" variable inside the run function
 // we MUST pass it as the second argument
 const url = await instance.run(async (json) => {
+  // you can use global "config" object that has some functions from "polotno/config" module
+  window.config.addGlobalFont({ name: 'MyCustomFont', url: 'https://example.com/font.otf' });
+
+  // you can use global "store" object
   store.loadJSON(json);
   await store.waitLoading();
   return store.toDataURL();
