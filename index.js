@@ -30,28 +30,41 @@ module.exports.createInstance = async ({ key } = {}) => {
   return {
     close: async () => await browser.close(),
     run,
-    jsonToDataURL: async (json) => {
-      return await run(async (json) => {
-        store.loadJSON(json);
-        await store.waitLoading();
-        return store.toDataURL();
-      }, json);
+    jsonToDataURL: async (json, attrs) => {
+      return await run(
+        async (json, attrs) => {
+          store.loadJSON(json);
+          await store.waitLoading();
+          console.log(JSON.stringify(attrs));
+          return store.toDataURL(attrs);
+        },
+        json,
+        attrs
+      );
     },
-    jsonToImageBase64: async (json) => {
-      return await run(async (json) => {
-        store.loadJSON(json);
-        await store.waitLoading();
-        const url = store.toDataURL();
-        return url.split('base64,')[1];
-      }, json);
+    jsonToImageBase64: async (json, attrs) => {
+      return await run(
+        async (json, attrs) => {
+          store.loadJSON(json);
+          await store.waitLoading();
+          const url = store.toDataURL();
+          return url.split('base64,')[1];
+        },
+        json,
+        attrs
+      );
     },
-    jsonToPDFBase64: async (json) => {
-      return await run(async (json) => {
-        store.loadJSON(json);
-        await store.waitLoading();
-        const url = await store.toPDFDataURL();
-        return url.split('base64,')[1];
-      }, json);
+    jsonToPDFBase64: async (json, attrs) => {
+      return await run(
+        async (json, attrs) => {
+          store.loadJSON(json);
+          await store.waitLoading();
+          const url = await store.toPDFDataURL(attrs);
+          return url.split('base64,')[1];
+        },
+        json,
+        attrs
+      );
     },
   };
 };
