@@ -45,7 +45,10 @@ Run any Polotno store API directly inside web-page context
 // we MUST pass it as the second argument
 const url = await instance.run(async (json) => {
   // you can use global "config" object that has some functions from "polotno/config" module
-  window.config.addGlobalFont({ name: 'MyCustomFont', url: 'https://example.com/font.otf' });
+  window.config.addGlobalFont({
+    name: 'MyCustomFont',
+    url: 'https://example.com/font.otf',
+  });
 
   // you can use global "store" object
   store.loadJSON(json);
@@ -61,7 +64,9 @@ Export json into base64 string of image.
 ```js
 const json = JSON.parse(fs.readFileSync('polotno.json'));
 
-const imageBase64 = await instance.jsonToImageBase64(json);
+const imageBase64 = await instance.jsonToImageBase64(json, {
+  mimeType: 'image/png',
+}); // also 'image/jpeg' is supported
 fs.writeFileSync('out.png', imageBase64, 'base64');
 ```
 
