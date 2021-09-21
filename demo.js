@@ -14,14 +14,15 @@ async function run() {
   const json = JSON.parse(fs.readFileSync('./test-data/polotno2.json'));
 
   console.time('export');
-  const url = await instance.jsonToDataURL(json, {
-    mimeType: 'image/jpeg',
+
+  const imageBase64 = await instance.jsonToImageBase64(json, {
+    pixelRatio: 6,
   });
-  // fs.writeFileSync('out.png', imageBase64, 'base64');
+  fs.writeFileSync('out.png', imageBase64, 'base64');
   console.timeEnd('export');
 
-  // const pdfBase64 = await instance.jsonToPDFBase64(json);
-  // fs.writeFileSync('out.pdf', pdfBase64, 'base64');
+  const pdfBase64 = await instance.jsonToPDFBase64(json, { dpi: 300 });
+  fs.writeFileSync('out2.pdf', pdfBase64, 'base64');
 
   // close instance
   instance.close();

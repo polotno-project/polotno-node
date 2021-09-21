@@ -27,33 +27,30 @@ module.exports.createInstance = async ({ key } = {}) => {
     return await page.evaluate(func, ...args);
   };
 
+  const jsonToDataURL = async (json, attrs) => {
+    return await run(
+      async (json, attrs) => {
+        const pixelRatio = attrs.pixelRatio || 1;
+        store.loadJSON(json);
+        store.setElementsPixelRatio(pixelRatio);
+        await store.waitLoading();
+        return store.toDataURL({ ...attrs, pixelRatio });
+      },
+      json,
+      attrs
+    );
+  };
+
+  const jsonToImageBase64 = async (json, attrs) => {
+    const url = await jsonToDataURL(json, attrs);
+    return url.split('base64,')[1];
+  };
+
   return {
     close: async () => await browser.close(),
     run,
-    jsonToDataURL: async (json, attrs) => {
-      return await run(
-        async (json, attrs) => {
-          store.loadJSON(json);
-          await store.waitLoading();
-          console.log(JSON.stringify(attrs));
-          return store.toDataURL(attrs);
-        },
-        json,
-        attrs
-      );
-    },
-    jsonToImageBase64: async (json, attrs) => {
-      return await run(
-        async (json, attrs) => {
-          store.loadJSON(json);
-          await store.waitLoading();
-          const url = store.toDataURL();
-          return url.split('base64,')[1];
-        },
-        json,
-        attrs
-      );
-    },
+    jsonToDataURL,
+    jsonToImageBase64,
     jsonToPDFBase64: async (json, attrs) => {
       return await run(
         async (json, attrs) => {
