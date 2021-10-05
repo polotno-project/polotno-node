@@ -57,6 +57,17 @@ const url = await instance.run(async (json) => {
 }, json);
 ```
 
+### `instance.jsonToDataURL(json, attrs)`
+
+Export json into data URL.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const url = await instance.jsonToDataURL(json);
+res.json({ url });
+```
+
 ### `instance.jsonToImageBase64(json)`
 
 Export json into base64 string of image.

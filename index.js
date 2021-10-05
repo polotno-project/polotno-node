@@ -1,8 +1,16 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 
-module.exports.createInstance = async ({ key } = {}) => {
-  const browser = await puppeteer.launch({});
+const defaultLaunch = async () => {
+  const puppeteer = require('puppeteer');
+  return await puppeteer.launch({});
+};
+
+module.exports.createInstance = async ({
+  key,
+  launch = defaultLaunch,
+} = {}) => {
+  const browser = await launch();
   const page = await browser.newPage();
 
   page.on('console', (msg) => {
