@@ -37,7 +37,7 @@ module.exports.createInstance = async ({ key } = {}) => {
         return store.toDataURL({ ...attrs, pixelRatio });
       },
       json,
-      attrs
+      attrs || {}
     );
   };
 
@@ -60,7 +60,7 @@ module.exports.createInstance = async ({ key } = {}) => {
           return url.split('base64,')[1];
         },
         json,
-        attrs
+        attrs || {}
       );
     },
   };
