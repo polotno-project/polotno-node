@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno2.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno3.json'));
 
   console.time('export');
 

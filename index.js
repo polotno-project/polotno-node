@@ -9,6 +9,7 @@ const defaultLaunch = async () => {
 module.exports.createInstance = async ({
   key,
   launch = defaultLaunch,
+  url,
 } = {}) => {
   const browser = await launch();
   const page = await browser.newPage();
@@ -27,9 +28,20 @@ module.exports.createInstance = async ({
     });
   });
 
-  await page.goto(
-    `file:${path.join(__dirname, 'dist', 'client.html')}?key=${key}`
-  );
+  page.on('error', (err) => {
+    console.log('error happen at the page: ', err);
+  });
+
+  page.on('pageerror', (pageerr) => {
+    console.log('pageerror occurred: ', pageerr);
+  });
+
+  const visitPage =
+    url || `file:${path.join(__dirname, 'dist', 'client.html')}?key=${key}`;
+
+  console.log('visit page', visitPage);
+
+  await page.goto(visitPage);
 
   const run = async (func, ...args) => {
     return await page.evaluate(func, ...args);
