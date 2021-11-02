@@ -4,8 +4,7 @@ import { Workspace } from 'polotno/canvas/workspace';
 import { createStore } from 'polotno/model/store';
 import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
 
-import { addGlobalFont } from 'polotno/config';
-
+import { addGlobalFont } from 'polotno/utils/fonts';
 
 toggleFadeInAnimation(false);
 
@@ -17,7 +16,7 @@ const store = createStore({
 
 window.store = store;
 window.config = {
-  addGlobalFont
+  addGlobalFont,
 };
 
 ReactDOM.render(<Workspace store={store} />, document.getElementById('root'));

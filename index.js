@@ -1,17 +1,10 @@
+const chrome = require('chrome-aws-lambda');
 const puppeteer = require('puppeteer');
 const path = require('path');
 
-const defaultLaunch = async () => {
-  const puppeteer = require('puppeteer');
-  return await puppeteer.launch({});
-};
+const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'client.html')}`;
 
-module.exports.createInstance = async ({
-  key,
-  launch = defaultLaunch,
-  url,
-} = {}) => {
-  const browser = await launch();
+const getNewPage = async (browser, url) => {
   const page = await browser.newPage();
 
   page.on('console', (msg) => {
@@ -28,23 +21,39 @@ module.exports.createInstance = async ({
     });
   });
 
-  page.on('error', (err) => {
-    console.log('error happen at the page: ', err);
+  await page.goto(url);
+
+  return page;
+};
+
+module.exports.createInstance = async ({ key, url, useParallelPages } = {}) => {
+  const browser = await puppeteer.launch({
+    args: [
+      ...chrome.args,
+      '--no-sandbox',
+      '--hide-scrollbars',
+      '--disable-web-security',
+      '--allow-file-access-from-files',
+    ],
+    defaultViewport: chrome.defaultViewport,
+    executablePath: await chrome.executablePath,
+    headless: true,
+    ignoreHTTPSErrors: true,
   });
+  const visitPage = url || `${DEFAULT_CLIENT}?key=${key}`;
 
-  page.on('pageerror', (pageerr) => {
-    console.log('pageerror occurred: ', pageerr);
-  });
-
-  const visitPage =
-    url || `file:${path.join(__dirname, 'dist', 'client.html')}?key=${key}`;
-
-  console.log('visit page', visitPage);
-
-  await page.goto(visitPage);
+  const firstPage = await getNewPage(browser, visitPage);
 
   const run = async (func, ...args) => {
-    return await page.evaluate(func, ...args);
+    const page = useParallelPages
+      ? await getNewPage(browser, visitPage)
+      : firstPage;
+
+    const result = await page.evaluate(func, ...args);
+    if (useParallelPages) {
+      page.close();
+    }
+    return result;
   };
 
   const jsonToDataURL = async (json, attrs) => {

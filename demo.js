@@ -11,13 +11,14 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno3.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno2.json'));
 
   console.time('export');
 
   const imageBase64 = await instance.jsonToImageBase64(json, {
     pixelRatio: 6,
   });
+
   fs.writeFileSync('out.png', imageBase64, 'base64');
   console.timeEnd('export');
 

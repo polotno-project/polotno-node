@@ -1,6 +1,6 @@
 # Polotno-node
 
-NodeJS package to work with [Polotno Framework](https://polotno.dev/).
+Export Polotno JSON into images and pdf files. NodeJS package to work with [Polotno Store API](https://polotno.dev/).
 
 ## Usage
 
