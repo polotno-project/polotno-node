@@ -11,17 +11,18 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno-mask.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/custom-font.json'));
 
-  console.time('export');
-
-  const imageBase64 = await instance.jsonToImageBase64(json, {
-    pixelRatio: 6,
+  await instance.run(async () => {
+    window.config.addGlobalFont({
+      fontFamily: 'Toyota-Bold',
+      url: 'https://dd5bevh7dpeja.cloudfront.net/assetsForApi/fonts/InfinitiBrandCY-Regular.woff2',
+    });
   });
 
-  fs.writeFileSync('out.png', imageBase64, 'base64');
-  console.timeEnd('export');
+  const imageBase64 = await instance.jsonToImageBase64(json);
 
+  fs.writeFileSync('out.png', imageBase64, 'base64');
   const pdfBase64 = await instance.jsonToPDFBase64(json, { dpi: 300 });
   fs.writeFileSync('out2.pdf', pdfBase64, 'base64');
 
