@@ -11,20 +11,41 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/custom-font.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno_11.json'));
 
-  await instance.run(async () => {
-    window.config.addGlobalFont({
-      fontFamily: 'Toyota-Bold',
-      url: 'https://dd5bevh7dpeja.cloudfront.net/assetsForApi/fonts/InfinitiBrandCY-Regular.woff2',
-    });
-  });
+  const pages = json.pages;
 
-  const imageBase64 = await instance.jsonToImageBase64(json);
+  // json.pages = json.pages.slice(11, 13);
 
-  fs.writeFileSync('out.png', imageBase64, 'base64');
-  const pdfBase64 = await instance.jsonToPDFBase64(json, { dpi: 300 });
-  fs.writeFileSync('out2.pdf', pdfBase64, 'base64');
+  // const imageBase64 = await instance.jsonToImageBase64(json);
+
+  // fs.writeFileSync('out.png', imageBase64, 'base64');
+  // console.time('each');
+  // let interval = setInterval(() => {
+  //   instance.run(() => {
+  //     store.activePage.children.forEach((child) => {
+  //       console.log(child.id, child.__isLoaded);
+  //     });
+  //   });
+  // }, 1000);
+  // for (let i = 0; i < pages.length; i++) {
+  //   const page = pages[i];
+  //   // page.children = page.children.filter((child) => child.type === 'svg');
+  //   json.pages = [page];
+  //   console.log('page', page.id);
+  //   const pdfBase64 = await instance.jsonToPDFBase64(json);
+  //   fs.writeFileSync(i + 'out.pdf', pdfBase64, 'base64');
+  // }
+  // console.timeEnd('each');
+  console.time('all');
+  json.pages = pages;
+  // json.pages.forEach((page, index) => {
+  const pdfBase64 = await instance.jsonToPDFBase64(json);
+  fs.writeFileSync('out.pdf', pdfBase64, 'base64');
+  console.timeEnd('all');
+  // clearInterval(interval);
+  //   console.log('page', index);
+  // });
 
   // close instance
   instance.close();
