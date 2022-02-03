@@ -11,7 +11,15 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno_11.json'));
+  const json = JSON.parse(
+    fs.readFileSync('./test-data/polotno_2_private.json')
+  );
+
+  json.pages.forEach((page) => {
+    page.children = page.children.filter(
+      (c) => c.type === 'text' || c.type === 'image' || c.type === 'svg'
+    );
+  });
 
   const pages = json.pages;
 

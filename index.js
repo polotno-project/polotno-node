@@ -75,22 +75,29 @@ module.exports.createInstance = async ({ key, url, useParallelPages } = {}) => {
     return url.split('base64,')[1];
   };
 
+  const jsonToPDFDataURL = async (json, attrs) => {
+    return await run(
+      async (json, attrs) => {
+        store.loadJSON(json);
+        await store.waitLoading();
+        return await store.toPDFDataURL(attrs);
+      },
+      json,
+      attrs || {}
+    );
+  };
+
+  const jsonToPDFBase64 = async (json, attrs) => {
+    const url = await jsonToPDFDataURL(json, attrs);
+    return url.split('base64,')[1];
+  };
+
   return {
     close: async () => await browser.close(),
     run,
     jsonToDataURL,
     jsonToImageBase64,
-    jsonToPDFBase64: async (json, attrs) => {
-      return await run(
-        async (json, attrs) => {
-          store.loadJSON(json);
-          await store.waitLoading();
-          const url = await store.toPDFDataURL(attrs);
-          return url.split('base64,')[1];
-        },
-        json,
-        attrs || {}
-      );
-    },
+    jsonToPDFDataURL,
+    jsonToPDFBase64,
   };
 };
