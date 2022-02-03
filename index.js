@@ -30,7 +30,7 @@ module.exports.createInstance = async ({
   key,
   url,
   useParallelPages,
-  browserArgs,
+  browserArgs = [],
 } = {}) => {
   const browser = await puppeteer.launch({
     args: [

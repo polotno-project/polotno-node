@@ -22,6 +22,6 @@
   "license": "MIT",
   "dependencies": {
     "chrome-aws-lambda": "^10.1.0",
-    "puppeteer": "^10.4.0"
+    "puppeteer": "^13.1.3"
   }
 }

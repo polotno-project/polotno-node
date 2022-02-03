@@ -21,11 +21,11 @@ async function run() {
     );
   });
 
-  json.pages = json.pages.slice(0, 4);
+  // json.pages = json.pages.slice(0, 4);
 
-  console.log(JSON.stringify(json));
+  // console.log(JSON.stringify(json));
 
-  return;
+  // return;
 
   const pages = json.pages;
 
