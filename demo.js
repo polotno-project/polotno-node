@@ -21,6 +21,12 @@ async function run() {
     );
   });
 
+  json.pages = json.pages.slice(0, 4);
+
+  console.log(JSON.stringify(json));
+
+  return;
+
   const pages = json.pages;
 
   // json.pages = json.pages.slice(11, 13);
