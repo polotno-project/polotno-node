@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { createInstance } = require('./index');
+const { createInstance } = require('./index.js');
 
 async function run() {
   // create working instance
@@ -8,6 +8,7 @@ async function run() {
     // (!) please don't use it in your projects
     // to create your own API key please go here: https://polotno.dev/cabinet
     key: 'nFA5H9elEytDyPyvKL7T',
+    browser,
   });
 
   // load sample json
@@ -21,7 +22,7 @@ async function run() {
     );
   });
 
-  // json.pages = json.pages.slice(0, 4);
+  // json.pages = json.pages.slice(0, 1);
 
   // console.log(JSON.stringify(json));
 

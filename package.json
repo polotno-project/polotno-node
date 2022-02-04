@@ -10,6 +10,7 @@
   "files": [
     "dist",
     "index.js",
+    "instance.js",
     "README.md"
   ],
   "devDependencies": {
