@@ -1,6 +1,7 @@
 # Polotno-node
 
 Export Polotno JSON into images and pdf files. NodeJS package to work with [Polotno Store API](https://polotno.dev/).
+Should work fine with lambda functions as well.
 
 ## Usage
 
@@ -68,7 +69,7 @@ const url = await instance.jsonToDataURL(json);
 res.json({ url });
 ```
 
-### `instance.jsonToImageBase64(json)`
+### `instance.jsonToImageBase64(json, attrs)`
 
 Export json into base64 string of image.
 
@@ -81,7 +82,7 @@ const imageBase64 = await instance.jsonToImageBase64(json, {
 fs.writeFileSync('out.png', imageBase64, 'base64');
 ```
 
-### `instance.jsonToPDFBase64(json)`
+### `instance.jsonToPDFBase64(json, attrs)`
 
 Export json into base64 string of pdf file.
 
@@ -90,4 +91,31 @@ const json = JSON.parse(fs.readFileSync('polotno.json'));
 
 const pdfBase64 = await instance.jsonToPDFBase64(json);
 fs.writeFileSync('out.pdf', pdfBase64, 'base64');
+```
+
+### `instance.jsonToPDFDataURL(json, attrs)`
+
+Export json into data url of pdf file.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const url = await instance.jsonToPDFDataURL(json);
+res.json({ url });
+```
+
+## Browserless usage
+
+By default `polotno-node` will import browser bundle using `chrome-aws-lambda`. But you can use `browserless` instead, to keep your cloud function smaller.
+
+```js
+const { createInstance } = require('polotno-node/instance');
+const puppeteer = require('puppeteer');
+
+const instance = await createInstance({
+  key: 'nFA5H9elEytDyPyvKL7T',
+  browser: await puppeteer.connect({
+    browserWSEndpoint: 'wss://chrome.browserless.io?token=API_KEY',
+  }),
+});
 ```
