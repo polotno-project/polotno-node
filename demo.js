@@ -11,9 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(
-    fs.readFileSync('./test-data/polotno_2_private.json')
-  );
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno1.json'));
 
   // json.pages.forEach((page, index) => {
   const pdfBase64 = await instance.jsonToPDFBase64(json);
