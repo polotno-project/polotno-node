@@ -1,7 +1,7 @@
 const path = require('path');
 const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'client.html')}`;
 
-const getNewPage = async (browser, url) => {
+module.exports.createPage = async (browser, url) => {
   const page = await browser.newPage();
 
   page.on('console', (msg) => {
@@ -23,6 +23,36 @@ const getNewPage = async (browser, url) => {
   return page;
 };
 
+module.exports.run = async (page, func, args) => {
+  return await page.evaluate(func, ...args);
+};
+
+module.exports.jsonToDataURL = async (page, json, attrs) => {
+  return await page.evaluate(
+    async (json, attrs) => {
+      const pixelRatio = attrs.pixelRatio || 1;
+      store.loadJSON(json);
+      store.setElementsPixelRatio(pixelRatio);
+      await store.waitLoading();
+      return store.toDataURL({ ...attrs, pixelRatio });
+    },
+    json,
+    attrs || {}
+  );
+};
+
+module.exports.jsonToPDFDataURL = async (page, json, attrs) => {
+  return page.evaluate(
+    async (json, attrs) => {
+      store.loadJSON(json);
+      await store.waitLoading();
+      return await store.toPDFDataURL(attrs);
+    },
+    json,
+    attrs || {}
+  );
+};
+
 module.exports.createInstance = async ({
   key,
   url,
@@ -30,12 +60,13 @@ module.exports.createInstance = async ({
   browser,
 } = {}) => {
   const visitPage = url || `${DEFAULT_CLIENT}?key=${key}`;
-
-  const firstPage = await getNewPage(browser, visitPage);
+  const firstPage = useParallelPages
+    ? null
+    : await module.exports.createPage(browser, visitPage);
 
   const run = async (func, ...args) => {
     const page = useParallelPages
-      ? await getNewPage(browser, visitPage)
+      ? await module.exports.createPage(browser, visitPage)
       : firstPage;
 
     const result = await page.evaluate(func, ...args);
