@@ -12,9 +12,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(
-    fs.readFileSync('./test-data/polotno_large_private.json')
-  );
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno4.json'));
 
   // json.pages.forEach((page, index) => {
   const pdfBase64 = await instance.jsonToPDFBase64(json, {
