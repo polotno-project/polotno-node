@@ -12,12 +12,13 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno4.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/polotno2_private.json'));
 
   // json.pages.forEach((page, index) => {
   const pdfBase64 = await instance.jsonToPDFBase64(json, {
-    parallel: 4,
-    quality: 0.8,
+    quality: 0.6,
+    parallel: 7,
+    mimeType: 'image/png',
   });
   fs.writeFileSync('out.pdf', pdfBase64, 'base64');
   console.timeEnd('export');
