@@ -23,7 +23,6 @@
   "license": "MIT",
   "dependencies": {
     "chrome-aws-lambda": "^10.1.0",
-    "polotno-node": "^0.3.5",
     "puppeteer": "^13.5.1"
   }
 }
