@@ -119,3 +119,21 @@ const instance = await createInstance({
   }),
 });
 ```
+
+## Troubleshooting
+
+If you have an error like this
+
+```
+Unhandled Promise Rejection 	{"errorType":"Runtime.UnhandledPromiseRejection","errorMessage":"Error: Evaluation failed: ReferenceError: store is not defined\n    at __puppeteer_evaluation_script__:3:9"
+```
+
+It may mean that Polotno Client Editor was not loaded in `puppeteer` instance. It is possible that you are missing required files in `node_modules` folder. I got this error when I was trying to run `polotno-node` on Vercel. To fix the issue you need to add this config into `vercel.json`:
+
+```
+"functions": {
+  "api/render.js": { // remember to replace this line with your function name
+    "includeFiles": "node_modules/polotno-node/**"
+  },
+}
+```
