@@ -114,6 +114,7 @@ module.exports.createInstance = async ({
 
   return {
     close: async () => await browser.close(),
+    firstPage,
     run,
     jsonToDataURL,
     jsonToImageBase64,
