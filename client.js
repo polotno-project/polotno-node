@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { Workspace } from 'polotno/canvas/workspace';
 import { createStore } from 'polotno/model/store';
 import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
@@ -21,4 +21,5 @@ window.config = {
   addGlobalFont,
 };
 
-ReactDOM.render(<Workspace store={store} />, document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Workspace store={store} />);
