@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { Workspace } from 'polotno/canvas/workspace';
 import { createStore } from 'polotno/model/store';
 import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
-import { unstable_setForceTextFit } from 'polotno/config';
+import {
+  unstable_setForceTextFit,
+  unstable_useHtmlTextRender,
+} from 'polotno/config';
 
 import { addGlobalFont } from 'polotno/utils/fonts';
 
@@ -19,6 +22,7 @@ const store = createStore({
 window.store = store;
 window.config = {
   addGlobalFont,
+  unstable_useHtmlTextRender,
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
