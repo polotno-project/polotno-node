@@ -1,6 +1,6 @@
 {
   "name": "polotno-node",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Polotno workflow from NodeJS",
   "main": "index.js",
   "scripts": {
