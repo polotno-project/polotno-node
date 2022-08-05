@@ -6,6 +6,7 @@ import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
 import {
   unstable_setForceTextFit,
   unstable_useHtmlTextRender,
+  onLoadError,
 } from 'polotno/config';
 
 import { addGlobalFont } from 'polotno/utils/fonts';
@@ -23,6 +24,7 @@ window.store = store;
 window.config = {
   addGlobalFont,
   unstable_useHtmlTextRender,
+  onLoadError,
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
