@@ -4,7 +4,7 @@ import { Workspace } from 'polotno/canvas/workspace';
 import { createStore } from 'polotno/model/store';
 import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
 import {
-  unstable_setForceTextFit,
+  unstable_setTextOverflow,
   unstable_useHtmlTextRender,
   onLoadError,
 } from 'polotno/config';
@@ -12,7 +12,7 @@ import {
 import { addGlobalFont } from 'polotno/utils/fonts';
 
 toggleFadeInAnimation(false);
-unstable_setForceTextFit(true);
+unstable_setTextOverflow('change-font-size');
 
 const key = new URLSearchParams(location.search).get('key');
 
