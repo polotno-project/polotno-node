@@ -37,6 +37,69 @@ run();
 
 ## API
 
+### `instance.jsonToDataURL(json, attrs)`
+
+Export json into data URL.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+// by default it will export first page only
+const url = await instance.jsonToDataURL(json);
+res.json({ url });
+
+// export many pages:
+for (const page of json.pages) {
+  const url = await instance.jsonToDataURL(json, { pageId: page.id });
+  // do something with url
+}
+```
+
+### `instance.jsonToImageBase64(json, attrs)`
+
+Export json into base64 string of image.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+// by default it will export first page only
+const imageBase64 = await instance.jsonToImageBase64(json, {
+  mimeType: 'image/png',
+}); // also 'image/jpeg' is supported
+fs.writeFileSync('out.png', imageBase64, 'base64');
+
+// export many pages:
+for (const page of json.pages) {
+  const imageBase64 = await instance.jsonToImageBase64(json, {
+    pageId: page.id,
+  });
+  // do something with base64
+}
+```
+
+### `instance.jsonToPDFBase64(json, attrs)`
+
+Export json into base64 string of pdf file.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+// it will export all pages in the JSON
+const pdfBase64 = await instance.jsonToPDFBase64(json);
+fs.writeFileSync('out.pdf', pdfBase64, 'base64');
+```
+
+### `instance.jsonToPDFDataURL(json, attrs)`
+
+Export json into data url of pdf file.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const url = await instance.jsonToPDFDataURL(json);
+res.json({ url });
+```
+
 ### `instance.run()`
 
 Run any Polotno store API directly inside web-page context
@@ -56,52 +119,6 @@ const url = await instance.run(async (json) => {
   await store.waitLoading();
   return store.toDataURL();
 }, json);
-```
-
-### `instance.jsonToDataURL(json, attrs)`
-
-Export json into data URL.
-
-```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
-
-const url = await instance.jsonToDataURL(json);
-res.json({ url });
-```
-
-### `instance.jsonToImageBase64(json, attrs)`
-
-Export json into base64 string of image.
-
-```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
-
-const imageBase64 = await instance.jsonToImageBase64(json, {
-  mimeType: 'image/png',
-}); // also 'image/jpeg' is supported
-fs.writeFileSync('out.png', imageBase64, 'base64');
-```
-
-### `instance.jsonToPDFBase64(json, attrs)`
-
-Export json into base64 string of pdf file.
-
-```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
-
-const pdfBase64 = await instance.jsonToPDFBase64(json);
-fs.writeFileSync('out.pdf', pdfBase64, 'base64');
-```
-
-### `instance.jsonToPDFDataURL(json, attrs)`
-
-Export json into data url of pdf file.
-
-```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
-
-const url = await instance.jsonToPDFDataURL(json);
-res.json({ url });
 ```
 
 ## Browserless usage

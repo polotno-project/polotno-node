@@ -24,5 +24,14 @@
   "dependencies": {
     "chrome-aws-lambda": "^10.1.0",
     "puppeteer": "^15.5.0"
+  },
+  "bugs": {
+    "url": "https://github.com/polotno-project/polotno-node/issues"
+  },
+  "homepage": "https://github.com/polotno-project/polotno-node",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:polotno-project/polotno-node.git"
   }
 }
