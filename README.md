@@ -50,7 +50,10 @@ res.json({ url });
 
 // export many pages:
 for (const page of json.pages) {
-  const url = await instance.jsonToDataURL(json, { pageId: page.id });
+  const url = await instance.jsonToDataURL(
+    { ...json, pages: [page] }, // for optimization, we can modify JSON to include only one page
+    { pageId: page.id }
+  );
   // do something with url
 }
 ```
@@ -70,9 +73,10 @@ fs.writeFileSync('out.png', imageBase64, 'base64');
 
 // export many pages:
 for (const page of json.pages) {
-  const imageBase64 = await instance.jsonToImageBase64(json, {
-    pageId: page.id,
-  });
+  const imageBase64 = await instance.jsonToImageBase64(
+    { ...json, pages: [page] }, // for optimization, we can modify JSON to include only one page
+    { pageId: page.id }
+  );
   // do something with base64
 }
 ```
