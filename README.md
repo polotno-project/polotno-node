@@ -37,6 +37,33 @@ run();
 
 ## API
 
+### `createInstance(options)`
+
+Create working instance of Polotno Node.
+
+```js
+const { createInstance } = require('polotno-node');
+const instance = await createInstance({
+  // this is a demo key just for that project
+  // (!) please don't use it in your projects
+  // to create your own API key please go here: https://polotno.dev/cabinet
+  key: 'nFA5H9elEytDyPyvKL7T',
+  // useParallelPages - use parallel pages to speed up rendering
+  // you can use false only for sequential calls
+  // it may break rendering if you call many parallel requests
+  // default is true
+  useParallelPages: false,
+  // url - url of the Polotno Client Editor
+  // client editor is just simple public html page that have `store` as global variable
+  // by default it will run local build
+  url: 'https://yourappdomain.com/client',
+  // browser - puppeteer browser instance
+  // by default it will use chrome-aws-lambda
+  // useful to set your own rendering props or use browserless
+  browser: browser,
+});
+```
+
 ### `instance.jsonToDataURL(json, attrs)`
 
 Export json into data URL.

@@ -53,10 +53,22 @@ module.exports.jsonToPDFDataURL = async (page, json, attrs) => {
   );
 };
 
+module.exports.jsonToBlob = async (page, json, attrs) => {
+  return page.evaluate(
+    async (json, attrs) => {
+      store.loadJSON(json);
+      await store.waitLoading();
+      return await store.toBlob(attrs);
+    },
+    json,
+    attrs || {}
+  );
+};
+
 module.exports.createInstance = async ({
   key,
   url,
-  useParallelPages,
+  useParallelPages = true,
   browser,
 } = {}) => {
   const visitPage = url || `${DEFAULT_CLIENT}?key=${key}`;
@@ -69,11 +81,18 @@ module.exports.createInstance = async ({
       ? await module.exports.createPage(browser, visitPage)
       : firstPage;
 
-    const result = await page.evaluate(func, ...args);
-    if (useParallelPages) {
-      page.close();
+    try {
+      const result = await page.evaluate(func, ...args);
+      if (useParallelPages) {
+        page.close();
+      }
+      return result;
+    } catch (e) {
+      if (useParallelPages) {
+        page.close();
+      }
+      throw e;
     }
-    return result;
   };
 
   const jsonToDataURL = async (json, attrs) => {
@@ -107,6 +126,18 @@ module.exports.createInstance = async ({
     );
   };
 
+  const jsonToBlob = async (json, attrs) => {
+    return await run(
+      async (json, attrs) => {
+        store.loadJSON(json);
+        await store.waitLoading();
+        return await store.toBlob(attrs);
+      },
+      json,
+      attrs || {}
+    );
+  };
+
   const jsonToPDFBase64 = async (json, attrs) => {
     const url = await jsonToPDFDataURL(json, attrs);
     return url.split('base64,')[1];
@@ -115,10 +146,12 @@ module.exports.createInstance = async ({
   return {
     close: async () => await browser.close(),
     firstPage,
+    browser,
     run,
     jsonToDataURL,
     jsonToImageBase64,
     jsonToPDFDataURL,
     jsonToPDFBase64,
+    jsonToBlob,
   };
 };
