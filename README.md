@@ -152,6 +152,23 @@ const url = await instance.run(async (json) => {
 }, json);
 ```
 
+## Your own client
+
+By default `polotno-node` ships with the default Polotno Editor with its (hopefully) last version. If you use experimental API such as `unstable_registerShapeModel` and `unstable_registerShapeComponent`, the rendering may fail if you use unknow elements types.
+
+In that case you can use your own client editor. You need to create a public html page with `store` as global variable and mount just `<Workspace />` component from `polotno/canvas` module. Take a look into `client.html` file and `client.js` file in this repo as a demo. In your own version of the Editor you can use experimental API to define custom components.
+
+Pass `url` option to `createInstance` function with public url of your client editor.
+
+```js
+const { createInstance } = require('polotno-node');
+
+const instance = await createInstance({
+  key: 'KEY',
+  url: 'https://yourappdomain.com/client',
+});
+```
+
 ## Browserless usage
 
 By default `polotno-node` will import browser bundle using `chrome-aws-lambda`. But you can use `browserless` instead, to keep your cloud function smaller.
