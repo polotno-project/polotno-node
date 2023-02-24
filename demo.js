@@ -8,29 +8,25 @@ async function run() {
     // this is a demo key just for that project
     // (!) please don't use it in your projects
     // to create your own API key please go here: https://polotno.dev/cabinet
-    key: 'lSz22QSOBQI0pXEm_0lm',
-    useParallelPages: true,
+    key: 'nFA5H9elEytDyPyvKL7T',
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/polotno4_private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/phil_homes.json'));
+  let i = 0;
   setInterval(() => {
     instance
-      .jsonToDataURL({ width: 'asdf' })
+      .jsonToImageBase64(json)
       .then((data) => {
-        console.log('converted');
+        i += 1;
+        fs.writeFileSync('./out/out-' + i + '.png', data, 'base64');
       })
       .catch((e) => {
         // console.log('failed', e);
       });
-    instance.browser.pages().then((pages) => {
-      console.log('pages', pages.length);
-    });
-  }, 5000);
+  }, 1000);
 
   // fs.writeFileSync('out-2.png', binary, 'binary');
-  console.timeEnd('export');
-  // close instance
   // instance.close();
 }
 
