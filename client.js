@@ -7,6 +7,7 @@ import {
   unstable_setTextOverflow,
   unstable_useHtmlTextRender,
   onLoadError,
+  unstable_setTextVerticalResizeEnabled,
 } from 'polotno/config';
 
 import { addGlobalFont } from 'polotno/utils/fonts';
@@ -24,6 +25,7 @@ window.store = store;
 window.config = {
   addGlobalFont,
   unstable_useHtmlTextRender,
+  unstable_setTextVerticalResizeEnabled,
   onLoadError,
 };
 

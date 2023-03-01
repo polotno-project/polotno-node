@@ -133,7 +133,9 @@ res.json({ url });
 
 ### `instance.run()`
 
-Run any Polotno store API directly inside web-page context
+Run any Polotno store API directly inside web-page context.
+
+**Warning: by default every `run` and every export function will create a new page with its own editor and context.** If you want to make and export after you use `instance.run()` you must do it inside the same `run` function.
 
 ```js
 // we can't directly use "json" variable inside the run function
@@ -148,6 +150,23 @@ const url = await instance.run(async (json) => {
   // you can use global "store" object
   store.loadJSON(json);
   await store.waitLoading();
+  return store.toDataURL();
+}, json);
+```
+
+### `window.config` usage
+
+`window.config` is a global object that has some functions from `polotno/config` module. You can use it to add custom fonts and customize some settings.
+Not all options are supported yet. If you see anything missing, please create an issue. You can see all available options in `client.js` file.
+
+You should be able to change config before you call `store.loadJSON` function and do you export.
+
+```js
+const url = await instance.run(async (json) => {
+  // you can use global "config" object that has some functions from "polotno/config" module
+  window.config.unstable_setTextVerticalResizeEnabled(true);
+  // you can use global "store" object
+  store.loadJSON(json);
   return store.toDataURL();
 }, json);
 ```
