@@ -26,6 +26,7 @@ window.config = {
   addGlobalFont,
   unstable_useHtmlTextRender,
   unstable_setTextVerticalResizeEnabled,
+  unstable_setTextOverflow,
   onLoadError,
 };
 
