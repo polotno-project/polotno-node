@@ -19,7 +19,6 @@ module.exports.createPage = async (browser, url) => {
   });
 
   await page.goto(url);
-
   return page;
 };
 
@@ -84,12 +83,12 @@ module.exports.createInstance = async ({
     try {
       const result = await page.evaluate(func, ...args);
       if (useParallelPages) {
-        page.close();
+        await page.close();
       }
       return result;
     } catch (e) {
       if (useParallelPages) {
-        page.close();
+        await page.close();
       }
       throw e;
     }
@@ -144,7 +143,9 @@ module.exports.createInstance = async ({
   };
 
   return {
-    close: async () => await browser.close(),
+    close: async () => {
+      await browser.close();
+    },
     firstPage,
     browser,
     run,
@@ -153,5 +154,6 @@ module.exports.createInstance = async ({
     jsonToPDFDataURL,
     jsonToPDFBase64,
     jsonToBlob,
+    createPage: async () => await module.exports.createPage(browser, visitPage),
   };
 };

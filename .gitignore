@@ -7,3 +7,4 @@ dist
 *.lock
 *private.json
 out.pdf
+out.gif
