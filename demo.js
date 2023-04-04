@@ -13,8 +13,14 @@ async function run() {
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/sample_private.json'));
 
-  const base64 = await instance.jsonToImageBase64(json);
-  fs.writeFileSync('out.png', base64, 'base64');
+  await instance.run(async () => {
+    for (let i = 0; i < 100; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.log(i);
+    }
+  });
+  // const base64 = await instance.jsonToImageBase64(json);
+  // fs.writeFileSync('out.png', base64, 'base64');
 
   console.log('done');
   // fs.writeFileSync('out-2.png', binary, 'binary');
