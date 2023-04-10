@@ -4,7 +4,7 @@
   "description": "Polotno workflow from NodeJS",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "ava",
     "build": "rm -rf ./dist && parcel build ./client.html --public-url ./ && rm ./dist/*js.map",
     "dev": "parcel ./client.html"
   },
@@ -15,8 +15,11 @@
     "README.md"
   ],
   "devDependencies": {
+    "ava": "^5.2.0",
     "parcel-bundler": "^1.12.4",
-    "polotno": "^1.8.3",
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0",
+    "polotno": "^1.8.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

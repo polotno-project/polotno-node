@@ -8,3 +8,5 @@ dist
 *private.json
 out.pdf
 out.gif
+*-current-export.png
+*-diff.png

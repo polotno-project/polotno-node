@@ -81,7 +81,25 @@ module.exports.createInstance = async ({
       : firstPage;
 
     try {
+      if (args[1]?.assetLoadTimeout) {
+        await page.evaluate((timeout) => {
+          if (window.config && window.config.setAssetLoadTimeout) {
+            window.config.setAssetLoadTimeout(timeout);
+          }
+        }, args[1].assetLoadTimeout);
+      }
+      await page.evaluate(() => {
+        if (window.config?.onLoadError) {
+          window.config.onLoadError((error) => {
+            window._polotnoError = error;
+          });
+        }
+      });
       const result = await page.evaluate(func, ...args);
+      const error = await page.evaluate(() => window._polotnoError);
+      if (error) {
+        throw new Error(error);
+      }
       if (useParallelPages) {
         await page.close();
       }

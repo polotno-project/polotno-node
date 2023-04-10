@@ -8,6 +8,7 @@ import {
   unstable_useHtmlTextRender,
   onLoadError,
   unstable_setTextVerticalResizeEnabled,
+  setAssetLoadTimeout,
 } from 'polotno/config';
 
 import { addGlobalFont } from 'polotno/utils/fonts';
@@ -28,6 +29,7 @@ window.config = {
   unstable_setTextVerticalResizeEnabled,
   unstable_setTextOverflow,
   onLoadError,
+  setAssetLoadTimeout,
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
