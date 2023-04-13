@@ -131,6 +131,14 @@ const url = await instance.jsonToPDFDataURL(json);
 res.json({ url });
 ```
 
+> **NOTE: all export API will pass `attrs` object into relevant export function from `store`.**
+
+In addition to that you can pass `assetLoadTimeout` attribute to `attrs` object. It will be used to set timeout for loading assets (images, fonts, etc). By default it is 30000ms.
+
+```js
+const url = await instance.jsonToPDFDataURL(json, { assetLoadTimeout: 60000 });
+```
+
 ### `instance.run()`
 
 Run any Polotno store API directly inside web-page context.
