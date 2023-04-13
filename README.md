@@ -131,7 +131,15 @@ const url = await instance.jsonToPDFDataURL(json);
 res.json({ url });
 ```
 
-> **NOTE: all export API will pass `attrs` object into relevant export function from `store`.**
+### `attrs` usage
+
+**NOTE: all export API will pass `attrs` object into relevant export function from `store`.**
+
+```js
+const url = await instance.jsonToDataURL(json, { pixelRatio: 0.2 });
+// under the hood it will call:
+// const url = await store.toDataURL({ pixelRatio: 0.2 });
+```
 
 In addition to that you can pass `assetLoadTimeout` attribute to `attrs` object. It will be used to set timeout for loading assets (images, fonts, etc). By default it is 30000ms.
 
