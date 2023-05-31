@@ -17,7 +17,6 @@ module.exports.createPage = async (browser, url) => {
       console.log(text);
     });
   });
-
   await page.goto(url);
   return page;
 };

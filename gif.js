@@ -1,29 +1,29 @@
 const fs = require('fs');
 const { createCanvas, Image, loadImage } = require('canvas');
 const GIFEncoder = require('gifencoder');
-const axios = require('axios');
-const ffmpeg = require('fluent-ffmpeg');
+// const axios = require('axios');
+// const ffmpeg = require('fluent-ffmpeg');
 
 // Download the video using axios
-const downloadVideo = async (videoUrl, file) => {
-  const response = await axios({
-    url: videoUrl,
-    method: 'GET',
-    responseType: 'stream',
-  });
-  // Create a new ffmpeg command
-  const command = ffmpeg()
-    .input(response.data)
-    .outputOptions('-c:v libx264')
-    .outputOptions('-crf 20')
-    .outputOptions('-preset veryfast')
-    .outputOptions('-pix_fmt yuv420p')
-    .outputOptions('-movflags frag_keyframe+empty_moov')
-    .output(file);
+// const downloadVideo = async (videoUrl, file) => {
+//   const response = await axios({
+//     url: videoUrl,
+//     method: 'GET',
+//     responseType: 'stream',
+//   });
+//   // Create a new ffmpeg command
+//   const command = ffmpeg()
+//     .input(response.data)
+//     .outputOptions('-c:v libx264')
+//     .outputOptions('-crf 20')
+//     .outputOptions('-preset veryfast')
+//     .outputOptions('-pix_fmt yuv420p')
+//     .outputOptions('-movflags frag_keyframe+empty_moov')
+//     .output(file);
 
-  // Run the ffmpeg command
-  command.run();
-};
+//   // Run the ffmpeg command
+//   command.run();
+// };
 
 module.exports.jsonToGifFile = async function jsonToGifFile(page, json, attrs) {
   // create a canvas with the same dimensions as the images
@@ -39,17 +39,6 @@ module.exports.jsonToGifFile = async function jsonToGifFile(page, json, attrs) {
   encoder.setRepeat(0); // 0 = repeat forever
   encoder.setDelay(100); // frame delay in ms
   encoder.setQuality(10); // lower is better
-
-  for (const page of json.pages) {
-    for (const el of page.children) {
-      if (el.type === 'video') {
-        const { src } = el;
-        const file = './dist/' + el.id + '.mp4';
-        await downloadVideo(src, file);
-        // el.src = 'file://' + el.id + '.avi';
-      }
-    }
-  }
   // first load json
   await page.evaluate(
     async (json, attrs) => {
@@ -61,25 +50,30 @@ module.exports.jsonToGifFile = async function jsonToGifFile(page, json, attrs) {
   );
 
   // loop through the images and add each to the animation
-  const frames = 10;
+  const frames = 20;
   for (let i = 0; i < frames; i++) {
-    const currentTime = i * 1000;
+    const currentTime = i * 100;
+    console.time('exporting frame');
     const dataURL = await page.evaluate(
       async (json, attrs, currentTime) => {
         store.setCurrentTime(currentTime);
-        return await store.toDataURL({ ...attrs, pixelRatio: 1 });
+        await store.waitLoading();
+        console.log('currentTime', currentTime);
+        return await store.toDataURL({ ...attrs, pixelRatio: 0.2 });
       },
       json,
       attrs || {},
       currentTime
     );
+    console.timeEnd('exporting frame');
+    console.time('drawing frame');
     const image = await loadImage(dataURL);
     ctx.drawImage(image, 0, 0, json.width, json.height);
+    console.timeEnd('drawing frame');
+    console.time('adding frame');
     encoder.addFrame(ctx);
+    console.timeEnd('adding frame');
   }
   // finish the animation
   encoder.finish();
-  return new Promise((resolve) => {
-    setTimeout(resolve, 10000);
-  });
 };

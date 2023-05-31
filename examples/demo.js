@@ -1,10 +1,7 @@
 const fs = require('fs');
-const { createInstance } = require('./index.js');
-
-const { jsonToGifFile } = require('./gif.js');
+const { createInstance } = require('../index.js');
 
 async function run() {
-  console.time('export');
   // create working instance
   const instance = await createInstance({
     // this is a demo key just for that project
@@ -14,13 +11,14 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
-  const page = await instance.createPage();
-  await jsonToGifFile(page, json, { out: 'out.gif' });
+  const json = JSON.parse(fs.readFileSync('./test-data/sample_private.json'));
+
+  const base64 = await instance.jsonToImageBase64(json);
+  fs.writeFileSync('out.png', base64, 'base64');
 
   console.log('done');
   // fs.writeFileSync('out-2.png', binary, 'binary');
-  instance.close();
+  await instance.close();
 }
 
-run().catch((e) => console.error(e));
+run();
