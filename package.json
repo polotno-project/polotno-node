@@ -30,8 +30,9 @@
   "author": "Anton Lavrenov",
   "license": "MIT",
   "dependencies": {
+    "@sparticuz/chromium": "113.0.1",
     "puppeteer": "^20.5.0",
-    "@sparticuz/chromium": "111.0.0"
+    "puppeteer-core": "^20.5.0"
   },
   "bugs": {
     "url": "https://github.com/polotno-project/polotno-node/issues"

@@ -1,5 +1,13 @@
+let puppeteer = require('puppeteer-core');
 const chrome = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer');
+
+const os = require('os');
+const isMacOs = os.platform() === 'darwin';
+
+// load full puppeteer only on macos
+if (isMacOs) {
+  puppeteer = require('puppeteer');
+}
 
 const { createInstance } = require('./instance');
 
@@ -24,7 +32,7 @@ module.exports.createInstance = async ({
     ],
     defaultViewport: chrome.defaultViewport,
     headless: 'new',
-    executablePath: await chrome.executablePath(),
+    executablePath: isMacOs ? undefined : await chrome.executablePath(),
     ignoreHTTPSErrors: true,
   });
 
