@@ -1,4 +1,4 @@
-const chrome = require('chrome-aws-lambda');
+const chrome = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer');
 
 const { createInstance } = require('./instance');
@@ -23,8 +23,8 @@ module.exports.createInstance = async ({
       ...browserArgs,
     ],
     defaultViewport: chrome.defaultViewport,
-    executablePath: await chrome.executablePath,
     headless: 'new',
+    executablePath: await chrome.executablePath(),
     ignoreHTTPSErrors: true,
   });
 
