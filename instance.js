@@ -3,6 +3,8 @@ const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'client.html')}`;
 
 module.exports.createPage = async (browser, url) => {
   const page = await browser.newPage();
+  // overwrite user agent, so headless check still work with the last puppeteer version
+  await page.setUserAgent('Chrome Headless');
 
   page.on('console', (msg) => {
     msg.args().forEach((message) => {

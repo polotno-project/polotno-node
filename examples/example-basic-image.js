@@ -14,10 +14,9 @@ async function run() {
   const json = JSON.parse(fs.readFileSync('./test-data/sample_private.json'));
 
   const base64 = await instance.jsonToImageBase64(json);
+
   fs.writeFileSync('out.png', base64, 'base64');
 
-  console.log('done');
-  // fs.writeFileSync('out-2.png', binary, 'binary');
   await instance.close();
 }
 
