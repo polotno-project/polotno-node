@@ -208,14 +208,13 @@ const instance = await createInstance({
 
 ## Usage on the cloud
 
-`polotno-node` should work by default on AWS Lambda. **TODO: add note about browser layer.**
-But in some cloud providers you may need to do extra steps to reduce function size.
+`polotno-node` should work by default on AWS Lambda. But in some cloud providers you may need to do extra steps to reduce function size.
 
 ### Browserless usage
 
-You can speed up your function execution a lot, if instead of using full browser you will use [browserless.io](https://browserless.io/) service. It is a paid service not affiliated with Polotno. Using browserless.io you can also make your function much smaller in size, so it will be simple to deploy cloud provider with smaller limits, like Vercel.
+You can speed up your function execution a lot, if instead of using full browser you will use [browserless.io](https://browserless.io/) service. It is a paid service not affiliated with Polotno.
 
-By default `polotno-node` will import full browser bundle. But you can use `browserless` instead, to keep your cloud function smaller.
+Using browserless.io you can also make your function much smaller in size, so it will be possible to deploy to cloud provider with smaller limits, like Vercel.
 
 ```js
 const { createInstance } = require('polotno-node/instance');
