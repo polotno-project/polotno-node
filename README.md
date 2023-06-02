@@ -206,9 +206,16 @@ const instance = await createInstance({
 });
 ```
 
-## Browserless usage
+## Usage on the cloud
 
-By default `polotno-node` will import browser bundle using `chrome-aws-lambda`. But you can use `browserless` instead, to keep your cloud function smaller.
+`polotno-node` should work by default on AWS Lambda. **TODO: add note about browser layer.**
+But in some cloud providers you may need to do extra steps to reduce function size.
+
+### Browserless usage
+
+You can speed up your function execution a lot, if instead of using full browser you will use [browserless.io](https://browserless.io/) service. It is a paid service not affiliated with Polotno. Using browserless.io you can also make your function much smaller in size, so it will be simple to deploy cloud provider with smaller limits, like Vercel.
+
+By default `polotno-node` will import full browser bundle. But you can use `browserless` instead, to keep your cloud function smaller.
 
 ```js
 const { createInstance } = require('polotno-node/instance');
@@ -222,20 +229,71 @@ const instance = await createInstance({
 });
 ```
 
+### Minimal usage
+
+Also you can use [@sparticuz/chromium-min](https://github.com/Sparticuz/chromium#-min-package) to reduce function size. Make sure it is caching chromium binary in your cloud provider. Looks like Vercel is NOT doing that!
+
+```bash
+npm install @sparticuz/chromium-min
+```
+
+```js
+const { createInstance } = require('polotno-node/instance');
+const chromium = require('@sparticuz/chromium-min');
+const puppeteer = require('puppeteer-core');
+
+const makeInstance = async () => {
+  const browser = await puppeteer.launch({
+    args: [
+      ...chromium.args,
+      '--no-sandbox',
+      '--hide-scrollbars',
+      '--disable-web-security',
+      '--allow-file-access-from-files',
+      // more info about --disable-dev-shm-usage
+      // https://github.com/puppeteer/puppeteer/issues/1175#issuecomment-369728215
+      // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
+      '--disable-dev-shm-usage',
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(
+      'https://github.com/Sparticuz/chromium/releases/download/v110.0.1/chromium-v110.0.1-pack.tar'
+    ),
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
+  });
+
+  return await createInstance({
+    key: 'your-key',
+    browser,
+  });
+};
+
+const instance = await makeInstance();
+```
+
 ## Troubleshooting
 
 If you have an error like this
 
 ```
-Unhandled Promise Rejection 	{"errorType":"Runtime.UnhandledPromiseRejection","errorMessage":"Error: Evaluation failed: ReferenceError: store is not defined\n    at __puppeteer_evaluation_script__:3:9"
+
+Unhandled Promise Rejection {"errorType":"Runtime.UnhandledPromiseRejection","errorMessage":"Error: Evaluation failed: ReferenceError: store is not defined\n at **puppeteer_evaluation_script**:3:9"
+
 ```
 
 It may mean that Polotno Client Editor was not loaded in `puppeteer` instance. It is possible that you are missing required files in `node_modules` folder. I got this error when I was trying to run `polotno-node` on Vercel. To fix the issue you need to add this config into `vercel.json`:
 
 ```
+
 "functions": {
-  "api/render.js": { // remember to replace this line with your function name
-    "includeFiles": "node_modules/polotno-node/**"
-  },
+"api/render.js": { // remember to replace this line with your function name
+"includeFiles": "node_modules/polotno-node/\*\*"
+},
 }
+
+```
+
+```
+
 ```
