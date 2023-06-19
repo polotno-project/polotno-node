@@ -4,27 +4,7 @@ import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { createInstance } from '../index.js';
 
-test('sample export', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
-
-  const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
-  const base64 = await instance.jsonToImageBase64(json);
-  fs.writeFileSync(
-    './test/samples/polotno-1-current-export.png',
-    base64,
-    'base64'
-  );
-  if (!fs.existsSync('./test/samples/polotno-1-export.png')) {
-    fs.writeFileSync('./test/samples/polotno-1-export.png', base64, 'base64');
-  }
-  const img1 = PNG.sync.read(
-    fs.readFileSync('./test/samples/polotno-1-current-export.png')
-  );
-  const img2 = PNG.sync.read(
-    fs.readFileSync('./test/samples/polotno-1-export.png')
-  );
+function getPixelsDiff(img1, img2) {
   const { width, height } = img1;
   const diff = new PNG({ width, height });
 
@@ -39,8 +19,70 @@ test('sample export', async (t) => {
     }
   );
 
-  fs.writeFileSync('./test/samples/polotno-1-diff.png', PNG.sync.write(diff));
+  return { numDiffPixels, diff };
+}
+
+async function matchImageSnapshot({ jsonFileName, instance, t, attrs }) {
+  // read json
+  const json = JSON.parse(fs.readFileSync('./test/samples/' + jsonFileName));
+  // export to base64
+  const base64 = await instance.jsonToImageBase64(json, attrs);
+  // write current version
+  fs.writeFileSync(
+    './test/samples/' + jsonFileName + '-current-export.png',
+    base64,
+    'base64'
+  );
+  // check snapshot version
+  if (!fs.existsSync('./test/samples/' + jsonFileName + '-export.png')) {
+    fs.writeFileSync(
+      './test/samples/' + jsonFileName + '-export.png',
+      base64,
+      'base64'
+    );
+  }
+  // compare
+  const img1 = PNG.sync.read(
+    fs.readFileSync('./test/samples/' + jsonFileName + '-current-export.png')
+  );
+  const img2 = PNG.sync.read(
+    fs.readFileSync('./test/samples/' + jsonFileName + '-export.png')
+  );
+  const { numDiffPixels, diff } = getPixelsDiff(img1, img2);
+  if (numDiffPixels > 0) {
+    fs.writeFileSync(
+      './test/samples/' + jsonFileName + '-diff.png',
+      PNG.sync.write(diff)
+    );
+  }
   t.is(numDiffPixels, 0);
+}
+
+test('sample export', async (t) => {
+  const instance = await createInstance({
+    key: 'nFA5H9elEytDyPyvKL7T',
+  });
+
+  await matchImageSnapshot({
+    jsonFileName: 'polotno-1.json',
+    instance,
+    t,
+  });
+});
+
+test.skip('rich text support', async (t) => {
+  const instance = await createInstance({
+    key: 'nFA5H9elEytDyPyvKL7T',
+  });
+
+  await matchImageSnapshot({
+    jsonFileName: 'rich-text.json',
+    instance,
+    t,
+    attrs: {
+      htmlTextRenderEnabled: true,
+    },
+  });
 });
 
 test('fail on timeout', async (t) => {

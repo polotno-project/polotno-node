@@ -7,17 +7,25 @@ module.exports.createPage = async (browser, url) => {
   await page.setUserAgent('Chrome Headless');
 
   page.on('console', (msg) => {
-    msg.args().forEach((message) => {
+    msg.args().forEach(async (message) => {
       // skip style information
       if (message.toString().indexOf('margin') >= 0) {
         return;
       }
+      // const val = await arg.jsonValue();
+      // const { type, subtype, description } = arg._remoteObject;
+      // console.log(
+      //   `type: ${type}, subtype: ${subtype}, description:\n ${description}`
+      // );
       const text = message
         .toString()
         .replace('JSHandle:', '')
         .replace('%c', '');
       console.log(text);
     });
+  });
+  page.on('pageerror', (msg) => {
+    console.error(msg);
   });
   await page.goto(url);
   return page;
@@ -88,6 +96,13 @@ module.exports.createInstance = async ({
             window.config.setAssetLoadTimeout(timeout);
           }
         }, args[1].assetLoadTimeout);
+      }
+      if (args[1]?.htmlTextRenderEnabled) {
+        await page.evaluate(() => {
+          if (window.config && window.config.unstable_useHtmlTextRender) {
+            window.config.unstable_useHtmlTextRender(true);
+          }
+        });
       }
       await page.evaluate(() => {
         if (window.config?.onLoadError) {
