@@ -70,7 +70,7 @@ test('sample export', async (t) => {
   });
 });
 
-test.skip('rich text support', async (t) => {
+test('rich text support', async (t) => {
   const instance = await createInstance({
     key: 'nFA5H9elEytDyPyvKL7T',
   });

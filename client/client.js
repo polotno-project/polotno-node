@@ -33,4 +33,4 @@ window.config = {
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<Workspace store={store} />);
+root.render(React.createElement(Workspace, { store }));

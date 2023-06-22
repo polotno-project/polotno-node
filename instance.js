@@ -1,5 +1,5 @@
 const path = require('path');
-const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'client.html')}`;
+const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
 
 module.exports.createPage = async (browser, url) => {
   const page = await browser.newPage();

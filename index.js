@@ -3,9 +3,10 @@ const chrome = require('@sparticuz/chromium');
 
 const os = require('os');
 const isMacOs = os.platform() === 'darwin';
+const isWindows = os.platform() === 'win32' || os.platform() === 'win64';
 
-// load full puppeteer only on macos
-if (isMacOs) {
+// load full puppeteer on non linux platforms
+if (isMacOs || isWindows) {
   puppeteer = require('puppeteer');
 }
 

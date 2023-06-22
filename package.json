@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "ava",
-    "build": "rm -rf ./dist && parcel build ./client.html --public-url ./ && rm ./dist/*js.map",
+    "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
     "dev": "parcel ./client.html"
   },
   "files": [
@@ -14,18 +14,19 @@
     "instance.js",
     "README.md"
   ],
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "devDependencies": {
     "ava": "^5.3.1",
     "axios": "^1.4.0",
     "canvas": "^2.11.2",
     "fluent-ffmpeg": "^2.1.2",
     "gifencoder": "^2.0.1",
-    "parcel-bundler": "^1.12.4",
     "pixelmatch": "^5.3.0",
     "pngjs": "^7.0.0",
     "polotno": "^1.9.8",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "vite": "^4.3.9"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",
