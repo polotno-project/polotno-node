@@ -104,6 +104,16 @@ module.exports.createInstance = async ({
           }
         });
       }
+      if (args[1]?.textVerticalResizeEnabled) {
+        await page.evaluate(() => {
+          if (
+            window.config &&
+            window.config.unstable_setTextVerticalResizeEnabled
+          ) {
+            window.config.unstable_setTextVerticalResizeEnabled(true);
+          }
+        });
+      }
       await page.evaluate(() => {
         if (window.config?.onLoadError) {
           window.config.onLoadError((error) => {

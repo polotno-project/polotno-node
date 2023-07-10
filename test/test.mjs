@@ -85,6 +85,21 @@ test('rich text support', async (t) => {
   });
 });
 
+test('vertical text align', async (t) => {
+  const instance = await createInstance({
+    key: 'nFA5H9elEytDyPyvKL7T',
+  });
+
+  await matchImageSnapshot({
+    jsonFileName: 'vertical-align.json',
+    instance,
+    t,
+    attrs: {
+      textVerticalResizeEnabled: true,
+    },
+  });
+});
+
 test('fail on timeout', async (t) => {
   const instance = await createInstance({
     key: 'nFA5H9elEytDyPyvKL7T',
