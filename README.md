@@ -159,6 +159,16 @@ const url = await instance.jsonToPDFDataURL(json, {
 });
 ```
 
+### `attrs.textVerticalResizeEnabled`
+
+Enabled vertical text resize and align. By default it is `false`.
+
+```js
+const url = await instance.jsonToPDFDataURL(json, {
+  textVerticalResizeEnabled: true,
+});
+```
+
 ### `instance.run()`
 
 Run any Polotno store API directly inside web-page context.
