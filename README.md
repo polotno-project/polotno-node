@@ -131,6 +131,28 @@ const url = await instance.jsonToPDFDataURL(json);
 res.json({ url });
 ```
 
+### `instance.jsonToGIFDataURL(json, attrs)`
+
+Export json into data url of GIF file with animations
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const url = await instance.jsonToGIFDataURL(json);
+res.json({ url });
+```
+
+### `instance.jsonToGIFBase64(json, attrs)`
+
+Export json into data url of GIF file with animations
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const base64 = await instance.jsonToGIFBase64(json);
+fs.writeFileSync('out.gif', base64, 'base64');
+```
+
 ### `attrs` usage
 
 **NOTE: all export API will pass `attrs` object into relevant export function from `store`.**

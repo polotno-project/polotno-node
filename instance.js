@@ -152,6 +152,22 @@ module.exports.createInstance = async ({
     );
   };
 
+  const jsonToGIFDataURL = async (json, attrs) => {
+    return await run(
+      async (json, attrs) => {
+        store.loadJSON(json);
+        return await store.toGIFDataURL(attrs);
+      },
+      json,
+      attrs || {}
+    );
+  };
+
+  const jsonToGIFBase64 = async (json, attrs) => {
+    const url = await jsonToGIFDataURL(json, attrs);
+    return url.split('base64,')[1];
+  };
+
   const jsonToImageBase64 = async (json, attrs) => {
     const url = await jsonToDataURL(json, attrs);
     return url.split('base64,')[1];
@@ -170,15 +186,9 @@ module.exports.createInstance = async ({
   };
 
   const jsonToBlob = async (json, attrs) => {
-    return await run(
-      async (json, attrs) => {
-        store.loadJSON(json);
-        await store.waitLoading();
-        return await store.toBlob(attrs);
-      },
-      json,
-      attrs || {}
-    );
+    const base64 = await jsonToImageBase64(json, attrs);
+    const blob = Buffer.from(base64, 'base64');
+    return blob;
   };
 
   const jsonToPDFBase64 = async (json, attrs) => {
@@ -198,6 +208,8 @@ module.exports.createInstance = async ({
     jsonToPDFDataURL,
     jsonToPDFBase64,
     jsonToBlob,
+    jsonToGIFDataURL,
+    jsonToGIFBase64,
     createPage: async () => await module.exports.createPage(browser, visitPage),
   };
 };
