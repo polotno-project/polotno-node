@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/sample_private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/temp.json'));
 
   const base64 = await instance.jsonToImageBase64(json);
 

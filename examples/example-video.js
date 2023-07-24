@@ -1,21 +1,11 @@
 const fs = require('fs');
-const { createInstance } = require('../instance.js');
-const puppeteer = require('puppeteer');
-
+const { createInstance } = require('../index.js');
 const { jsonToVideoFile } = require('../video.js');
 
 async function run() {
   // create working instance
   const instance = await createInstance({
-    // this is a demo key just for that project
-    // (!) please don't use it in your projects
-    // to create your own API key please go here: https://polotno.dev/cabinet
-    browser: await puppeteer.connect({
-      browserWSEndpoint:
-        'wss://chrome.browserless.io?token=207a1c64-56b3-4cae-8c4f-effc763d210c&--disable-web-security',
-    }),
     key: 'nFA5H9elEytDyPyvKL7T',
-    url: 'https://render-client.polotno.dev',
   });
 
   // load sample json

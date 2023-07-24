@@ -1,0 +1,63 @@
+{
+  "width": 1080,
+  "height": 1080,
+  "fonts": [],
+  "pages": [
+    {
+      "id": "VpDtajy3MF",
+      "children": [
+        {
+          "id": "NKYAm-rMw9",
+          "type": "image",
+          "name": "",
+          "opacity": 1,
+          "animations": [],
+          "visible": true,
+          "selectable": true,
+          "removable": true,
+          "alwaysOnTop": false,
+          "showInExport": true,
+          "x": 202.43125246399944,
+          "y": 33.64687869599901,
+          "width": 675.1374950720012,
+          "height": 1012.7062426080016,
+          "rotation": 0,
+          "blurEnabled": false,
+          "blurRadius": 10,
+          "brightnessEnabled": false,
+          "brightness": 0,
+          "sepiaEnabled": false,
+          "grayscaleEnabled": false,
+          "shadowEnabled": false,
+          "shadowBlur": 5,
+          "shadowOffsetX": 0,
+          "shadowOffsetY": 0,
+          "shadowColor": "black",
+          "shadowOpacity": 1,
+          "draggable": true,
+          "resizable": true,
+          "contentEditable": true,
+          "styleEditable": true,
+          "src": "https://images.unsplash.com/photo-1683267894199-4d45c90b6c1f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTY5OTZ8MHwxfGFsbHwyfHx8fHx8Mnx8MTY4MzI5NTIwNw&ixlib=rb-4.0.3&q=80&w=1080",
+          "cropX": 0,
+          "cropY": 0,
+          "cropWidth": 0.9999999999999998,
+          "cropHeight": 0.9999999999999996,
+          "cornerRadius": 0,
+          "flipX": false,
+          "flipY": false,
+          "clipSrc": "",
+          "borderColor": "black",
+          "borderSize": 0,
+          "keepRatio": false
+        }
+      ],
+      "width": "auto",
+      "height": "auto",
+      "background": "white",
+      "bleed": 0
+    }
+  ],
+  "unit": "px",
+  "dpi": 72
+}
