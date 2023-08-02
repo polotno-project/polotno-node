@@ -65,7 +65,7 @@ module.exports.jsonToVideoFile = async function jsonToGifFile(
   json,
   attrs
 ) {
-  fs.rmdirSync('./tmp', { recursive: true });
+  fs.rmSync('./tmp', { recursive: true });
   fs.mkdirSync('./tmp', { recursive: true });
 
   for (const page of json.pages) {
@@ -99,7 +99,7 @@ module.exports.jsonToVideoFile = async function jsonToGifFile(
     const dataURL = await page.evaluate(
       async (json, attrs, currentTime) => {
         store.setCurrentTime(currentTime + 1);
-        const url = await store.toDataURL({ ...attrs, pixelRatio: 0.01 });
+        const url = await store.toDataURL({ ...attrs, pixelRatio: 0.5 });
         return url;
       },
       json,
