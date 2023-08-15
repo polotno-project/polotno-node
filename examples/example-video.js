@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { createInstance } = require('../index.js');
-const { jsonToVideoFile } = require('../video.js');
+const { jsonToVideo } = require('../video.js');
 
 async function run() {
   // create working instance
@@ -12,7 +12,7 @@ async function run() {
   const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
   const page = await instance.createPage();
 
-  await jsonToVideoFile(page, json, { out: 'out.mp4' });
+  await jsonToVideo(page, json, { out: 'out.mp4' });
 
   await instance.close();
   process.exit(0);

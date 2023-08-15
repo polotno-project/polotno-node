@@ -236,6 +236,9 @@ const url = await instance.run(async (json) => {
 **This part is currently under development and API will change.**
 
 ```js
+import { createInstance } from 'polotno-node';
+import { jsonToVideo } from 'polotno/video';
+
 // create working instance
 const instance = await createInstance({
   key: '...key...',
@@ -245,7 +248,7 @@ const instance = await createInstance({
 const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
 const page = await instance.createPage();
 
-await jsonToVideoFile(page, json, { out: 'out.mp4' });
+await jsonToVideo(page, json, { out: 'out.mp4' });
 
 await instance.close();
 ```

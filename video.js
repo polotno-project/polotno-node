@@ -66,11 +66,7 @@ function printProgress(progress) {
   process.stdout.write(progress + '%');
 }
 
-module.exports.jsonToVideoFile = async function jsonToGifFile(
-  page,
-  json,
-  attrs
-) {
+module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
   fs.rmSync('./tmp', { recursive: true });
   fs.mkdirSync('./tmp', { recursive: true });
 
