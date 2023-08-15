@@ -12,6 +12,7 @@
     "dist",
     "index.js",
     "instance.js",
+    "video.js",
     "README.md"
   ],
   "browserslist": "> 0.5%, last 2 versions, not dead",
