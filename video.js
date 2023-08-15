@@ -67,7 +67,10 @@ function printProgress(progress) {
 }
 
 module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
-  fs.rmSync('./tmp', { recursive: true });
+  try {
+    fs.rmSync('./tmp', { recursive: true });
+  } catch (e) {}
+
   fs.mkdirSync('./tmp', { recursive: true });
 
   for (const page of json.pages) {
