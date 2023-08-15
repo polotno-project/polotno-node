@@ -26,11 +26,8 @@ const convertToWebM = (input, output) => {
     ffmpeg(input)
       .outputOptions(['-c:v libvpx', '-crf 30', '-b:v 1000k'])
       .output(output)
-      .on('start', () => {
-        console.log('Conversion started...');
-      })
+      .on('start', () => {})
       .on('end', () => {
-        console.log('Conversion ended successfully');
         resolve();
       })
       .on('error', (err) => {
@@ -52,13 +49,22 @@ const fileToDataUrl = (filename) => {
 };
 
 const videoToDataURL = async (url) => {
-  const destination = path.join('./tmp', 'video.mp4');
+  console.log('downloading', url);
+  const filename = Math.random().toString(36).substring(7);
+  const destination = path.join('./tmp', filename + '.mp4');
   await downloadVideo(url, destination);
   const webmFile = destination.replace('.mp4', '.webm');
+  console.log('converting to webm', url);
   await convertToWebM(destination, webmFile);
   const dataUrl = await fileToDataUrl(webmFile);
   return dataUrl;
 };
+
+function printProgress(progress) {
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+  process.stdout.write(progress + '%');
+}
 
 module.exports.jsonToVideoFile = async function jsonToGifFile(
   page,
@@ -95,7 +101,6 @@ module.exports.jsonToVideoFile = async function jsonToGifFile(
   const frames = Math.floor((duration / 1000) * fps);
   for (let i = 0; i < frames; i++) {
     const currentTime = i * 100;
-    console.time('render');
     const dataURL = await page.evaluate(
       async (json, attrs, currentTime) => {
         store.setCurrentTime(currentTime + 1);
@@ -106,13 +111,13 @@ module.exports.jsonToVideoFile = async function jsonToGifFile(
       attrs || {},
       currentTime
     );
-    console.timeEnd('render');
     const progress = ((i / frames) * 100).toFixed(1);
-    console.log(`Progress: ${progress}%`);
+    printProgress(progress);
     fs.mkdirSync('./tmp', { recursive: true });
     fs.writeFileSync(`./tmp/${i}.png`, dataURL.split(',')[1], 'base64');
   }
-  return new Promise((resolve, reject) => {
+
+  await new Promise((resolve, reject) => {
     ffmpeg()
       .input(`./tmp/%d.png`) // Make sure your images are named with numbers, e.g. 1.jpg, 2.jpg, etc.
       .inputFPS(fps)
@@ -123,4 +128,6 @@ module.exports.jsonToVideoFile = async function jsonToGifFile(
       .on('error', (err) => reject(err))
       .save(attrs.out);
   });
+
+  fs.rmSync('./tmp', { recursive: true });
 };
