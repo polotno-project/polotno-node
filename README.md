@@ -231,6 +231,25 @@ const url = await instance.run(async (json) => {
 }, json);
 ```
 
+## Video export
+
+**This part is currently under development and API will change.**
+
+```js
+// create working instance
+const instance = await createInstance({
+  key: '...key...',
+});
+
+// load sample json
+const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
+const page = await instance.createPage();
+
+await jsonToVideoFile(page, json, { out: 'out.mp4' });
+
+await instance.close();
+```
+
 ## Your own client
 
 By default `polotno-node` ships with the default Polotno Editor with its (hopefully) last version. If you use experimental API such as `unstable_registerShapeModel` and `unstable_registerShapeComponent`, the rendering may fail if you use unknown elements types.
