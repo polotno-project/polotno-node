@@ -124,7 +124,12 @@ module.exports.createInstance = async ({
       const result = await page.evaluate(func, ...args);
       const error = await page.evaluate(() => window._polotnoError);
       if (error) {
-        throw new Error(error);
+        const message = error.toString();
+        const isFontError = message.indexOf('Timeout for loading font') >= 0;
+        const skipError = isFontError && args[1]?.skipFontError;
+        if (!skipError) {
+          throw new Error(error);
+        }
       }
       if (useParallelPages) {
         await page.close();

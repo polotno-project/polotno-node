@@ -112,3 +112,18 @@ test('fail on timeout', async (t) => {
     });
   });
 });
+
+test('Undefined fonts should fallback', async (t) => {
+  const instance = await createInstance({
+    key: 'nFA5H9elEytDyPyvKL7T',
+  });
+
+  await matchImageSnapshot({
+    jsonFileName: 'undefined-font.json',
+    instance,
+    t,
+    attrs: {
+      skipFontError: true,
+    },
+  });
+});

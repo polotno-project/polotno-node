@@ -191,6 +191,16 @@ const url = await instance.jsonToPDFDataURL(json, {
 });
 ```
 
+### `attrs.skipFontError`
+
+If `skipFontError` is true, it will not throw error font is not loaded or not defined. By default it is `false`.
+
+```js
+const url = await instance.jsonToPDFDataURL(json, {
+  skipFontError: true,
+});
+```
+
 ### `instance.run()`
 
 Run any Polotno store API directly inside web-page context.
