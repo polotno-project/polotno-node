@@ -69,6 +69,9 @@ module.exports.createInstance = async ({
     ],
     defaultViewport: chrome.defaultViewport,
     headless: 'new',
+    // make default protocol timeout bigger
+    // because some clients had issues with it
+    protocolTimeout: 10 * 60 * 1000,
     executablePath: isMacOs ? undefined : await chrome.executablePath(),
     ignoreHTTPSErrors: true,
   });
