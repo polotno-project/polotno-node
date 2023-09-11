@@ -1,6 +1,5 @@
 let puppeteer = require('puppeteer-core');
 const chrome = require('@sparticuz/chromium');
-
 const os = require('os');
 const isMacOs = os.platform() === 'darwin';
 const isWindows = os.platform() === 'win32' || os.platform() === 'win64';
@@ -72,7 +71,8 @@ module.exports.createInstance = async ({
     // make default protocol timeout bigger
     // because some clients had issues with it
     protocolTimeout: 10 * 60 * 1000,
-    executablePath: isMacOs ? undefined : await chrome.executablePath(),
+    executablePath:
+      isMacOs || isWindows ? undefined : await chrome.executablePath(),
     ignoreHTTPSErrors: true,
   });
 
