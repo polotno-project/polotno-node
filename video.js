@@ -95,15 +95,26 @@ module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
   });
 
   const fps = 15;
+  const timePerFrame = 1000 / fps;
 
   // loop through the images and add each to the animation
   const frames = Math.floor((duration / 1000) * fps);
   for (let i = 0; i < frames; i++) {
-    const currentTime = i * 100;
+    const currentTime = i * timePerFrame;
     const dataURL = await page.evaluate(
       async (json, attrs, currentTime) => {
         store.setCurrentTime(currentTime + 1);
-        const url = await store.toDataURL({ ...attrs, pixelRatio: 0.5 });
+        const currentPage = store.pages.find((p) => {
+          return (
+            store.currentTime >= p.startTime &&
+            store.currentTime < p.startTime + p.duration
+          );
+        });
+        const url = await store.toDataURL({
+          pixelRatio: 0.5,
+          ...attrs,
+          pageId: currentPage?.id,
+        });
         return url;
       },
       json,
