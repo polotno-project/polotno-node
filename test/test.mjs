@@ -113,13 +113,30 @@ test('fail on timeout', async (t) => {
   });
 });
 
-test('Undefined fonts should fallback', async (t) => {
+test('Undefined fonts should fallback and we can skip it', async (t) => {
   const instance = await createInstance({
     key: 'nFA5H9elEytDyPyvKL7T',
   });
 
   await matchImageSnapshot({
-    jsonFileName: 'undefined-font.json',
+    jsonFileName: 'skip-font-error.json',
+    instance,
+    t,
+    attrs: {
+      skipFontError: true,
+    },
+  });
+});
+
+// when a text has bad font (we can't load it)
+// we should still wait and they try to resize text to fit bounding box
+test('Bad font resize', async (t) => {
+  const instance = await createInstance({
+    key: 'nFA5H9elEytDyPyvKL7T',
+  });
+
+  await matchImageSnapshot({
+    jsonFileName: 'bad-font-resize.json',
     instance,
     t,
     attrs: {
