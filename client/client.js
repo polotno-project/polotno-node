@@ -1,16 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Workspace } from 'polotno/canvas/workspace';
+import { WorkspaceCanvas } from 'polotno/canvas/workspace-canvas';
 import { createStore } from 'polotno/model/store';
 import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
-import {
-  unstable_setTextOverflow,
-  unstable_useHtmlTextRender,
-  onLoadError,
-  unstable_setTextVerticalResizeEnabled,
-  setAssetLoadTimeout,
-} from 'polotno/config';
-
+// instead of importing fom config, let's import from direct files
+// to avoid blueprint import
+import { setTextOverflow as unstable_setTextOverflow } from 'polotno/utils/flags';
+import { useHtmlTextRender as unstable_useHtmlTextRender } from 'polotno/utils/flags';
+import { onLoadError } from 'polotno/utils/loader';
+import { setTextVerticalResizeEnabled as unstable_setTextVerticalResizeEnabled } from 'polotno/utils/flags';
+import { setAssetLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
 
 toggleFadeInAnimation(false);
@@ -33,4 +32,9 @@ window.config = {
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(Workspace, { store }));
+root.render(
+  React.createElement(WorkspaceCanvas, {
+    store,
+    components: { PageControls: () => null, Tooltip: () => null },
+  })
+);

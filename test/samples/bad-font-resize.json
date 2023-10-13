@@ -1,12 +1,7 @@
 {
   "width": 1080,
   "height": 1080,
-  "fonts": [
-    {
-      "fontFamily": "sourcecodepro-regular.ttf",
-      "url": "https://user-uploaded-img.s3.amazonaws.com/custom_fonts/aakash@predis.ai/sourcecodepro-regular.ttf"
-    }
-  ],
+  "fonts": [],
   "pages": [
     {
       "id": "DlXj29j21w",
@@ -23,7 +18,7 @@
           "showInExport": true,
           "x": 270,
           "y": 502,
-          "width": 540,
+          "width": 530,
           "height": 93,
           "rotation": 0,
           "animations": [],

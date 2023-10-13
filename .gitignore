@@ -12,3 +12,4 @@ out.mp4
 *-current-export.png
 *-diff.png
 tmp
+.env
