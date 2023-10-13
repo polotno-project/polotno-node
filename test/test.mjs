@@ -4,6 +4,12 @@ import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { createInstance } from '../index.js';
 
+const key = process.env.POLOTNO_KEY;
+
+if (!key) {
+  console.error('Please set POLOTNO_KEY env variable');
+}
+
 function getPixelsDiff(img1, img2) {
   const { width, height } = img1;
   const diff = new PNG({ width, height });
