@@ -3,6 +3,8 @@ import fs from 'fs';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { createInstance } from '../index.js';
+import { config } from 'dotenv';
+config();
 
 const key = process.env.POLOTNO_KEY;
 
@@ -65,9 +67,7 @@ async function matchImageSnapshot({ jsonFileName, instance, t, attrs }) {
 }
 
 test('sample export', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
+  const instance = await createInstance({ key });
 
   await matchImageSnapshot({
     jsonFileName: 'polotno-1.json',
@@ -77,9 +77,7 @@ test('sample export', async (t) => {
 });
 
 test('rich text support', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
+  const instance = await createInstance({ key });
 
   await matchImageSnapshot({
     jsonFileName: 'rich-text.json',
@@ -92,9 +90,7 @@ test('rich text support', async (t) => {
 });
 
 test('vertical text align', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
+  const instance = await createInstance({ key });
 
   await matchImageSnapshot({
     jsonFileName: 'vertical-align.json',
@@ -107,9 +103,7 @@ test('vertical text align', async (t) => {
 });
 
 test('fail on timeout', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
+  const instance = await createInstance({ key });
 
   const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   const error = await t.throwsAsync(async () => {
@@ -120,9 +114,7 @@ test('fail on timeout', async (t) => {
 });
 
 test('Undefined fonts should fallback and we can skip it', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
+  const instance = await createInstance({ key });
 
   await matchImageSnapshot({
     jsonFileName: 'skip-font-error.json',
@@ -137,9 +129,7 @@ test('Undefined fonts should fallback and we can skip it', async (t) => {
 // when a text has bad font (we can't load it)
 // we should still wait and they try to resize text to fit bounding box
 test('Bad font resize', async (t) => {
-  const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
+  const instance = await createInstance({ key });
 
   await matchImageSnapshot({
     jsonFileName: 'bad-font-resize.json',
