@@ -245,9 +245,16 @@ const url = await instance.run(async (json) => {
 
 **This part is currently under development and API will change.**
 
+You may need to have ffmpeg available in your system to make it work.
+Also you need to manually dependencies:
+
+```bash
+npm install fluent-ffmpeg axios
+```
+
 ```js
 import { createInstance } from 'polotno-node';
-import { jsonToVideo } from 'polotno/video';
+import { jsonToVideo } from 'polotno-node/video';
 
 // create working instance
 const instance = await createInstance({
