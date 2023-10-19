@@ -73,6 +73,8 @@ module.exports.jsonToBlob = async (page, json, attrs) => {
   );
 };
 
+const busyPages = [];
+
 module.exports.createInstance = async ({
   key,
   url,
@@ -88,6 +90,14 @@ module.exports.createInstance = async ({
     const page = useParallelPages
       ? await module.exports.createPage(browser, visitPage)
       : firstPage;
+
+    if (busyPages.indexOf(page) >= 0) {
+      throw new Error(
+        'Current rendering context is busy with another task. Please use `useParallelPages: true` option to run multiple tasks in parallel or make sure previous task is finished before starting a new one.'
+      );
+    }
+
+    busyPages.push(page);
 
     try {
       if (args[1]?.assetLoadTimeout) {
@@ -135,11 +145,15 @@ module.exports.createInstance = async ({
           throw new Error(error);
         }
       }
+      // remove busy page
+      busyPages.splice(busyPages.indexOf(page), 1);
       if (useParallelPages) {
         await page.close();
       }
       return result;
     } catch (e) {
+      // remove busy page
+      busyPages.splice(busyPages.indexOf(page), 1);
       if (useParallelPages) {
         await page.close();
       }
