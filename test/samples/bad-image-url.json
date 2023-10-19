@@ -1,0 +1,42 @@
+{
+  "width": 1080,
+  "height": 1920,
+  "fonts": [],
+  "pages": [
+    {
+      "id": "wmofTKcdu3",
+      "children": [
+        {
+          "id": "2YuCaDrZFa",
+          "type": "image",
+          "x": 0,
+          "y": 0,
+          "rotation": 0,
+          "opacity": 1,
+          "locked": false,
+          "blurEnabled": false,
+          "blurRadius": 10,
+          "brightnessEnabled": false,
+          "brightness": 0,
+          "sepiaEnabled": false,
+          "grayscaleEnabled": false,
+          "shadowEnabled": false,
+          "shadowBlur": 5,
+          "shadowOffsetX": 0,
+          "shadowOffsetY": 0,
+          "shadowColor": "black",
+          "width": 1080,
+          "height": 1920,
+          "src": "wront-url",
+          "cropX": 0.08425925925925926,
+          "cropY": 0,
+          "cropWidth": 0.84375,
+          "cropHeight": 1,
+          "flipX": false,
+          "flipY": false
+        }
+      ],
+      "background": "white"
+    }
+  ]
+}
