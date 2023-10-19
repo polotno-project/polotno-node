@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.6.6] - 2023-10-19
 
+- Fail on incorrect `useParallelPages: false` usage
+
+## [2.6.6] - 2023-10-19
+
 - Fix for `useParallelPages: false`
 
 ## [2.6.4] - 2023-10-13
