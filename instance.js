@@ -131,15 +131,17 @@ module.exports.createInstance = async ({
           throw new Error(error);
         }
       }
-      if (useParallelPages) {
-        await page.close();
-      }
       return result;
     } catch (e) {
+
+      throw e;
+    } finally {
       if (useParallelPages) {
         await page.close();
       }
-      throw e;
+      page.evaluate(() => {
+        window._polotnoError = null;
+      })
     }
   };
 
