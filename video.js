@@ -63,7 +63,7 @@ const videoToDataURL = async (url) => {
 function printProgress(progress) {
   process.stdout.clearLine(0);
   process.stdout.cursorTo(0);
-  process.stdout.write(progress + '%');
+  process.stdout.write('Rendering frame: ' + progress + '%');
 }
 
 module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
@@ -85,6 +85,9 @@ module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
     async (json, attrs) => {
       store.loadJSON(json);
       await store.waitLoading();
+      // TODO: we need to active all pages first
+      // disable text fit, as it is already should be processed
+      window.config.unstable_setTextOverflow('resize');
     },
     json,
     attrs || {}
@@ -100,10 +103,19 @@ module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
   // loop through the images and add each to the animation
   const frames = Math.floor((duration / 1000) * fps);
   for (let i = 0; i < frames; i++) {
-    const currentTime = i * timePerFrame;
+    let currentTime = i * timePerFrame;
+    if (i === 0) {
+      // offset the very first frame to enable animation start
+      currentTime = 1;
+    }
+    if (i === frames - 1) {
+      // offset the very last frame to enable animation end
+      currentTime = duration - 1;
+    }
+
     const dataURL = await page.evaluate(
       async (json, attrs, currentTime) => {
-        store.setCurrentTime(currentTime + 1);
+        store.setCurrentTime(currentTime);
         const currentPage = store.pages.find((p) => {
           return (
             store.currentTime >= p.startTime &&
@@ -121,11 +133,13 @@ module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
       attrs || {},
       currentTime
     );
-    const progress = ((i / frames) * 100).toFixed(1);
+    const progress = ((i / (frames - 1)) * 100).toFixed(1);
     printProgress(progress);
     fs.mkdirSync('./tmp', { recursive: true });
     fs.writeFileSync(`./tmp/${i}.png`, dataURL.split(',')[1], 'base64');
   }
+
+  console.log('\nRendering video');
 
   await new Promise((resolve, reject) => {
     ffmpeg()

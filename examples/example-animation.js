@@ -9,7 +9,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/animation.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/animation-2.json'));
   const page = await instance.createPage();
 
   await jsonToVideo(page, json, { out: 'out.mp4' });
