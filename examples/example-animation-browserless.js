@@ -1,15 +1,24 @@
 const fs = require('fs');
-const { createInstance } = require('../index.js'); // it should be require('polotno-node')
+const { createInstance } = require('../instance.js'); // it should be require('polotno-node/instance')
 const { jsonToVideo } = require('../video.js'); // it should be require('polotno-node/video')
+const puppeteer = require('puppeteer-core');
 
 const { config } = require('dotenv');
 config();
 
+const RENDER_URL = process.env.RENDER_URL;
+
 async function run() {
   console.time('render');
   // create working instance
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: process.env.BROWSERLESS_URL,
+  });
+
   const instance = await createInstance({
     key: process.env.POLOTNO_KEY,
+    browser,
+    url: RENDER_URL,
   });
 
   // load sample json

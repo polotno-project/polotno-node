@@ -127,7 +127,7 @@ test('Undefined fonts should fallback and we can skip it', async (t) => {
 });
 
 // when a text has bad font (we can't load it)
-// we should still wait and they try to resize text to fit bounding box
+// we should still wait and then try to resize text to fit bounding box
 test('Bad font resize', async (t) => {
   const instance = await createInstance({ key });
 

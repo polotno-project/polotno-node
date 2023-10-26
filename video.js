@@ -63,7 +63,7 @@ const videoToDataURL = async (url) => {
 function printProgress(progress) {
   process.stdout.clearLine(0);
   process.stdout.cursorTo(0);
-  process.stdout.write('Rendering frame: ' + progress + '%');
+  process.stdout.write('Rendering frames: ' + progress + '%');
 }
 
 module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
@@ -87,7 +87,11 @@ module.exports.jsonToVideo = async function jsonToGifFile(page, json, attrs) {
       await store.waitLoading();
       // TODO: we need to active all pages first
       // disable text fit, as it is already should be processed
-      window.config.unstable_setTextOverflow('resize');
+      if (window.config.unstable_setTextOverflow) {
+        window.config.unstable_setTextOverflow('resize');
+      } else {
+        console.error('Can not set text overflow mode');
+      }
     },
     json,
     attrs || {}

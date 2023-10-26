@@ -49,13 +49,8 @@ const minimal_args = [
   '--use-mock-keychain',
 ];
 
-module.exports.createInstance = async ({
-  key,
-  url,
-  useParallelPages,
-  browserArgs = [],
-} = {}) => {
-  const browser = await puppeteer.launch({
+const createBrowser = async ({ browserArgs }) => {
+  return puppeteer.launch({
     args: [
       ...chrome.args,
       ...minimal_args,
@@ -75,9 +70,17 @@ module.exports.createInstance = async ({
       isMacOs || isWindows ? undefined : await chrome.executablePath(),
     ignoreHTTPSErrors: true,
   });
+};
 
+module.exports.createInstance = async ({
+  key,
+  url,
+  useParallelPages,
+  browserArgs = [],
+  browser,
+} = {}) => {
   return await createInstance({
-    browser,
+    browser: browser || (await createBrowser({ browserArgs })),
     key,
     url,
     useParallelPages,
