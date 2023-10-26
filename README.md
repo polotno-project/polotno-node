@@ -254,20 +254,27 @@ npm install fluent-ffmpeg axios
 
 ```js
 import { createInstance } from 'polotno-node';
-import { jsonToVideo } from 'polotno-node/video';
-
-// create working instance
-const instance = await createInstance({
-  key: '...key...',
-});
+import { jsonToVideo } from 'polotno-node/video-parallel';
 
 // load sample json
 const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
-const page = await instance.createPage();
 
-await jsonToVideo(page, json, { out: 'out.mp4' });
-
-await instance.close();
+await jsonToVideo(
+  // first argument is a function that returns an instance
+  // it can be a new instance on every call (useful for parallel rendering on local machine)
+  // or it can be a single instance (useful for cloud functions)
+  () =>
+    createInstance({
+      key: '...key...',
+    }),
+  json,
+  {
+    out: 'out.mp4', // output file name
+    parallel: 4, // number of parallel rendering processes
+    fps: 15, // frames per second
+    keepInstance: false, // keep instance open after rendering, make sure to use true if use just one instance
+  }
+);
 ```
 
 ## Your own client
