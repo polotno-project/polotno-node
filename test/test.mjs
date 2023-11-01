@@ -102,6 +102,21 @@ test('vertical text align', async (t) => {
   });
 });
 
+test('vertical html text with align', async (t) => {
+  const instance = await createInstance({ key });
+
+  await matchImageSnapshot({
+    jsonFileName: 'vertical-align-html.json',
+    instance,
+    t,
+    attrs: {
+      textVerticalResizeEnabled: true,
+      htmlTextRenderEnabled: true,
+      pixelRatio: 0.3,
+    },
+  });
+});
+
 test('fail on timeout', async (t) => {
   const instance = await createInstance({ key });
 
