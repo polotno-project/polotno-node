@@ -3,6 +3,10 @@ const ffmpeg = require('fluent-ffmpeg');
 const axios = require('axios');
 const path = require('path');
 
+const tmp = require('tmp');
+
+tmp.setGracefulCleanup();
+
 const downloadVideo = async (url, destination) => {
   const response = await axios({
     method: 'GET',
@@ -51,12 +55,14 @@ const fileToDataUrl = (filename) => {
 const videoToDataURL = async (url) => {
   console.log('downloading', url);
   const filename = Math.random().toString(36).substring(7);
-  const destination = path.join('./tmp', filename + '.mp4');
+  const tempFolder = tmp.dirSync();
+  const destination = path.join(tempFolder.name, filename + '.mp4');
   await downloadVideo(url, destination);
   const webmFile = destination.replace('.mp4', '.webm');
   console.log('converting to webm', url);
   await convertToWebM(destination, webmFile);
   const dataUrl = await fileToDataUrl(webmFile);
+  fs.rmSync(tempFolder.name, { recursive: true });
   return dataUrl;
 };
 
@@ -71,11 +77,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
   json,
   attrs
 ) {
-  try {
-    fs.rmSync('./tmp', { recursive: true });
-  } catch (e) {}
-
-  fs.mkdirSync('./tmp', { recursive: true });
+  const tempFolder = tmp.dirSync();
 
   for (const page of json.pages) {
     for (const el of page.children) {
@@ -169,7 +171,6 @@ module.exports.jsonToVideo = async function jsonToVideo(
               );
             });
             const url = await store.toDataURL({
-              pixelRatio: 0.5,
               ...attrs,
               pageId: currentPage?.id,
             });
@@ -179,9 +180,8 @@ module.exports.jsonToVideo = async function jsonToVideo(
           attrs || {},
           currentTime
         );
-        fs.mkdirSync('./tmp', { recursive: true });
         fs.writeFileSync(
-          `./tmp/${frameIndex}.png`,
+          `${tempFolder.name}/${frameIndex}.png`,
           dataURL.split(',')[1],
           'base64'
         );
@@ -240,19 +240,19 @@ module.exports.jsonToVideo = async function jsonToVideo(
   //   fs.writeFileSync(`./tmp/${i}.png`, dataURL.split(',')[1], 'base64');
   // }
 
-  console.log('\nRendering video');
+  const format = attrs.out.split('.').pop() || 'mp4';
 
   await new Promise((resolve, reject) => {
     ffmpeg()
-      .input(`./tmp/%d.png`) // Make sure your images are named with numbers, e.g. 1.jpg, 2.jpg, etc.
+      .input(`${tempFolder.name}/%d.png`) // Make sure your images are named with numbers, e.g. 1.jpg, 2.jpg, etc.
       .inputFPS(fps)
-      .videoCodec('libx264')
-      .outputOptions('-pix_fmt yuv420p')
-      .format('mp4')
+      // .videoCodec('libx265')
+      .outputOptions('-pix_fmt yuva420p')
+      .format(format)
       .on('end', () => resolve())
       .on('error', (err) => reject(err))
       .save(attrs.out);
   });
 
-  fs.rmSync('./tmp', { recursive: true });
+  fs.rmSync(tempFolder.name, { recursive: true });
 };
