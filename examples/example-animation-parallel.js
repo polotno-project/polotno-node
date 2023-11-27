@@ -15,7 +15,7 @@ async function run() {
         key: process.env.POLOTNO_KEY,
       }),
     json,
-    { out: 'out.mp4' }
+    { out: 'out.mp4', parallel: 3 }
   );
   console.timeEnd('render');
   process.exit(0);

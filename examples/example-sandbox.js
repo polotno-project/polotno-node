@@ -13,11 +13,23 @@ async function run() {
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/sample_private.json'));
 
-  const base64 = await instance.jsonToImageBase64(json, {
-    htmlTextRenderEnabled: true,
-    textVerticalResizeEnabled: true,
-    pixelRatio: 0.3,
-  });
+  const setStoreSize = async (storeJson, width, height) => {
+    return await instance.run(
+      async (storeJson, width, height) => {
+        store.loadJSON(storeJson);
+        await store.waitLoading();
+        store.setSize(width, height, true);
+        return store.toJSON();
+      },
+      storeJson,
+      width,
+      height
+    );
+  };
+
+  const storeJson = await setStoreSize(json, 842.4, 597.6);
+
+  const base64 = await instance.jsonToImageBase64(storeJson, {});
 
   fs.writeFileSync('out.png', base64, 'base64');
 

@@ -124,6 +124,10 @@ module.exports.jsonToVideo = async function jsonToVideo(
       const page = await instance.createPage();
       await page.evaluate(async (json) => {
         store.loadJSON(json);
+        await store.waitLoading();
+        await new Promise((resolve) => {
+          setTimeout(resolve, 100);
+        });
       }, json);
 
       let lastPageIndex = -1;
