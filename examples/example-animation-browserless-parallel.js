@@ -25,6 +25,7 @@ async function run() {
   const json = JSON.parse(fs.readFileSync('./test-data/animation-3.json'));
   await jsonToVideo(() => instance, json, {
     out: 'out.mp4',
+    pixelRatio: 0.2,
     keepInstance: true,
   });
 
