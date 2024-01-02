@@ -25,7 +25,6 @@ const downloadVideo = async (url, destination) => {
 // 2. Convert it into webm format
 
 const convertToWebM = (input, output) => {
-  console.log(input, output);
   return new Promise((resolve, reject) => {
     ffmpeg(input)
       .outputOptions(['-c:v libvpx', '-crf 30', '-b:v 1000k'])
@@ -66,6 +65,14 @@ const videoToDataURL = async (url) => {
   return dataUrl;
 };
 
+const urlCache = {};
+const cachedVideoToDataURL = async (url) => {
+  if (!urlCache[url]) {
+    urlCache[url] = videoToDataURL(url);
+  }
+  return urlCache[url];
+};
+
 function printProgress(progress) {
   process.stdout.clearLine(0);
   process.stdout.cursorTo(0);
@@ -79,13 +86,21 @@ module.exports.jsonToVideo = async function jsonToVideo(
 ) {
   const tempFolder = tmp.dirSync();
 
+  const videoEls = [];
+
   for (const page of json.pages) {
     for (const el of page.children) {
       if (el.type === 'video') {
-        el.src = await videoToDataURL(el.src);
+        videoEls.push(el);
       }
     }
   }
+
+  await Promise.all(
+    videoEls.map(async (el) => {
+      el.src = await cachedVideoToDataURL(el.src);
+    })
+  );
 
   const duration = json.pages.reduce((acc, page) => {
     return acc + page.duration;

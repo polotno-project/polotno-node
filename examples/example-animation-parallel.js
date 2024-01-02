@@ -8,14 +8,14 @@ config();
 async function run() {
   console.time('render');
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/animation-3.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/private-video.json'));
   await jsonToVideo(
     () =>
       createInstance({
         key: process.env.POLOTNO_KEY,
       }),
     json,
-    { out: 'out.mp4', parallel: 3 }
+    { out: 'out.mp4', parallel: 1 }
   );
   console.timeEnd('render');
   process.exit(0);
