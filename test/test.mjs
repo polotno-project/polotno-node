@@ -74,6 +74,7 @@ test('sample export', async (t) => {
     instance,
     t,
   });
+  await instance.close();
 });
 
 test('rich text support', async (t) => {
@@ -87,6 +88,7 @@ test('rich text support', async (t) => {
       htmlTextRenderEnabled: true,
     },
   });
+  await instance.close();
 });
 
 test('vertical text align', async (t) => {
@@ -100,6 +102,21 @@ test('vertical text align', async (t) => {
       textVerticalResizeEnabled: true,
     },
   });
+  await instance.close();
+});
+
+test('optionally disable text fit', async (t) => {
+  const instance = await createInstance({ key });
+
+  await matchImageSnapshot({
+    jsonFileName: 'resize-text.json',
+    instance,
+    t,
+    attrs: {
+      textOverflow: 'resize',
+    },
+  });
+  await instance.close();
 });
 
 test('vertical html text with align', async (t) => {
@@ -115,6 +132,7 @@ test('vertical html text with align', async (t) => {
       pixelRatio: 0.3,
     },
   });
+  await instance.close();
 });
 
 test('fail on timeout', async (t) => {
@@ -126,6 +144,7 @@ test('fail on timeout', async (t) => {
       assetLoadTimeout: 1,
     });
   });
+  await instance.close();
 });
 
 test('Undefined fonts should fallback and we can skip it', async (t) => {
@@ -139,6 +158,7 @@ test('Undefined fonts should fallback and we can skip it', async (t) => {
       skipFontError: true,
     },
   });
+  await instance.close();
 });
 
 // when a text has bad font (we can't load it)
@@ -154,6 +174,7 @@ test('Bad font resize', async (t) => {
       skipFontError: true,
     },
   });
+  await instance.close();
 });
 
 test('Should clear error with no parallel pages', async (t) => {
@@ -167,6 +188,7 @@ test('Should clear error with no parallel pages', async (t) => {
   const json2 = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   await instance.jsonToDataURL(json2);
   t.assert(true);
+  await instance.close();
 });
 
 test('Should throw error when several task in the process for non parallel', async (t) => {
@@ -178,6 +200,7 @@ test('Should throw error when several task in the process for non parallel', asy
   } catch (e) {
     t.assert(true, 'error triggered');
   }
+  await instance.close();
 });
 
 test('Should not throw error when several task in sequence for non parallel', async (t) => {
@@ -186,4 +209,5 @@ test('Should not throw error when several task in sequence for non parallel', as
   await instance.jsonToDataURL(json);
   await instance.jsonToDataURL(json);
   t.assert(true);
+  await instance.close();
 });

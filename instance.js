@@ -124,6 +124,13 @@ module.exports.createInstance = async ({
           }
         });
       }
+      if (args[1]?.textOverflow) {
+        await page.evaluate((overflow) => {
+          if (window.config && window.config.unstable_setTextOverflow) {
+            window.config.unstable_setTextOverflow(overflow);
+          }
+        }, args[1].textOverflow);
+      }
       await page.evaluate(() => {
         if (window.config?.onLoadError) {
           window.config.onLoadError((error) => {

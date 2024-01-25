@@ -201,6 +201,19 @@ const url = await instance.jsonToPDFDataURL(json, {
 });
 ```
 
+### `attrs.textOverflow`
+
+Control behavior of text on its overflow. Default is `change-font-size`. It means it will automatically reduce font size to fit text into the box. Other options are:
+
+- `resize` (change text element height to make text fit)
+- `ellipsis` (add ellipsis to the end of the text)
+
+```js
+const url = await instance.jsonToPDFDataURL(json, {
+  textOverflow: 'resize',
+});
+```
+
 ### `instance.run()`
 
 Run any Polotno store API directly inside web-page context.
