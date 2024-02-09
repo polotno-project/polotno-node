@@ -211,3 +211,16 @@ test('Should not throw error when several task in sequence for non parallel', as
   t.assert(true);
   await instance.close();
 });
+
+test('buffer canvas rendering', async (t) => {
+  const instance = await createInstance({ key });
+  await matchImageSnapshot({
+    jsonFileName: 'buffer-canvas.json',
+    instance,
+    t,
+    attrs: {
+      skipFontError: true,
+    },
+  });
+  await instance.close();
+});
