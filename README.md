@@ -328,6 +328,7 @@ const instance = await createInstance({
   browser: await puppeteer.connect({
     browserWSEndpoint: 'wss://chrome.browserless.io?token=API_KEY',
   }),
+  url: 'https://yourappdomain.com/client', // see "Your own client" section
 });
 ```
 
