@@ -313,6 +313,16 @@ const instance = await createInstance({
 
 `polotno-node` should work by default on AWS Lambda. But in some cloud providers you may need to do extra steps to reduce function size.
 
+### AWS S2
+
+S2 has some troubles with loading fonts. To fix the issue install Google Chrome, it will load all required libraries.
+
+```bash
+curl https://intoli.com/install-google-chrome.sh | bash
+```
+
+Got it from here: https://github.com/puppeteer/puppeteer/issues/765#issuecomment-353694116
+
 ### Browserless usage
 
 You can speed up your function execution a lot, if instead of using full browser you will use [browserless.io](https://browserless.io/) service. It is a paid service not affiliated with Polotno.

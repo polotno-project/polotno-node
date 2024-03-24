@@ -47,6 +47,10 @@ const minimal_args = [
   '--password-store=basic',
   '--use-gl=swiftshader',
   '--use-mock-keychain',
+  '--font-render-hinting=none',
+  '--disable-font-subpixel-positioning',
+  '--force-color-profile=generic-rgb',
+  '--text-rendering=geometricprecision',
 ];
 
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
