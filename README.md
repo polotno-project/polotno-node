@@ -313,9 +313,9 @@ const instance = await createInstance({
 
 `polotno-node` should work by default on AWS Lambda. But in some cloud providers you may need to do extra steps to reduce function size.
 
-### AWS S2
+### AWS EC2
 
-S2 has some troubles with loading fonts. To fix the issue install Google Chrome, it will load all required libraries.
+EC2 has some troubles with loading fonts. To fix the issue install Google Chrome, it will load all required libraries.
 
 ```bash
 curl https://intoli.com/install-google-chrome.sh | bash
