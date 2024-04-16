@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/bad-font-private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/template_private.json'));
 
   const base64 = await instance.jsonToImageBase64(json, {});
 

@@ -45,13 +45,13 @@ const minimal_args = [
   '--no-sandbox',
   '--no-zygote',
   '--password-store=basic',
-  '--use-gl=swiftshader',
+  !isMacOs && '--use-gl=swiftshader',
   '--use-mock-keychain',
   '--font-render-hinting=none',
   '--disable-font-subpixel-positioning',
   '--force-color-profile=generic-rgb',
   '--text-rendering=geometricprecision',
-];
+].filter(Boolean);
 
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
   return puppeteer.launch({
