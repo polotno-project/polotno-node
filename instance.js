@@ -104,6 +104,21 @@ module.exports.createInstance = async ({
         await page.evaluate((timeout) => {
           if (window.config && window.config.setAssetLoadTimeout) {
             window.config.setAssetLoadTimeout(timeout);
+          } else {
+            console.error(
+              'setAssetLoadTimeout function is not defined in the client.'
+            );
+          }
+        }, args[1].assetLoadTimeout);
+      }
+      if (args[1]?.fontLoadTimeout) {
+        await page.evaluate((timeout) => {
+          if (window.config && window.config.setFontLoadTimeout) {
+            window.config.setFontLoadTimeout(timeout);
+          } else {
+            console.error(
+              'setFontLoadTimeout function is not defined in the client.'
+            );
           }
         }, args[1].assetLoadTimeout);
       }
@@ -111,6 +126,10 @@ module.exports.createInstance = async ({
         await page.evaluate(() => {
           if (window.config && window.config.unstable_useHtmlTextRender) {
             window.config.unstable_useHtmlTextRender(true);
+          } else {
+            console.error(
+              'unstable_useHtmlTextRender function is not defined in the client.'
+            );
           }
         });
       }
@@ -121,6 +140,10 @@ module.exports.createInstance = async ({
             window.config.unstable_setTextVerticalResizeEnabled
           ) {
             window.config.unstable_setTextVerticalResizeEnabled(true);
+          } else {
+            console.error(
+              'unstable_setTextVerticalResizeEnabled function is not defined in the client.'
+            );
           }
         });
       }
@@ -128,6 +151,10 @@ module.exports.createInstance = async ({
         await page.evaluate((overflow) => {
           if (window.config && window.config.unstable_setTextOverflow) {
             window.config.unstable_setTextOverflow(overflow);
+          } else {
+            console.error(
+              'unstable_setTextOverflow function is not defined in the client.'
+            );
           }
         }, args[1].textOverflow);
       }
@@ -136,6 +163,10 @@ module.exports.createInstance = async ({
           window.config.onLoadError((error) => {
             window._polotnoError = error;
           });
+        } else {
+          console.error(
+            'onLoadError function is not defined in the client. Error handling will not work.'
+          );
         }
       });
       const result = await page.evaluate(func, ...args);

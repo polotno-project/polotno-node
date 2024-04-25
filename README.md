@@ -165,10 +165,18 @@ const url = await instance.jsonToDataURL(json, { pixelRatio: 0.2 });
 
 ### `attrs.assetLoadTimeout`
 
-You can add `assetLoadTimeout` attribute to `attrs` object. It will be used to set timeout for loading assets (images, fonts, etc). By default it is 30000ms.
+You can add `assetLoadTimeout` attribute to `attrs` object. It will be used to set timeout for loading assets. By default it is 30000ms.
 
 ```js
 const url = await instance.jsonToPDFDataURL(json, { assetLoadTimeout: 60000 });
+```
+
+### `attrs.assetFontTimeout`
+
+Timeout for loading fonts. By default it is 6000ms.
+
+```js
+const url = await instance.jsonToPDFDataURL(json, { assetFontTimeout: 10000 });
 ```
 
 ### `attrs.htmlTextRenderEnabled`

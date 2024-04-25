@@ -9,7 +9,7 @@ import { setTextOverflow as unstable_setTextOverflow } from 'polotno/utils/flags
 import { useHtmlTextRender as unstable_useHtmlTextRender } from 'polotno/utils/flags';
 import { onLoadError } from 'polotno/utils/loader';
 import { setTextVerticalResizeEnabled as unstable_setTextVerticalResizeEnabled } from 'polotno/utils/flags';
-import { setAssetLoadTimeout } from 'polotno/utils/loader';
+import { setAssetLoadTimeout, setFontLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
 
 toggleFadeInAnimation(false);
@@ -29,6 +29,7 @@ window.config = {
   unstable_setTextOverflow,
   onLoadError,
   setAssetLoadTimeout,
+  setFontLoadTimeout,
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

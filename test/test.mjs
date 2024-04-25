@@ -147,6 +147,21 @@ test('fail on timeout', async (t) => {
   await instance.close();
 });
 
+test('fail on font timeout', async (t) => {
+  const instance = await createInstance({ key });
+
+  const json = JSON.parse(
+    fs.readFileSync('./test/samples/polotno-with-text.json')
+  );
+
+  const error = await t.throwsAsync(async () => {
+    await instance.jsonToImageBase64(json, {
+      fontLoadTimeout: 1,
+    });
+  });
+  await instance.close();
+});
+
 test('Undefined fonts should fallback and we can skip it', async (t) => {
   const instance = await createInstance({ key });
 
