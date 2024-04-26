@@ -11,11 +11,11 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/large_private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/template_private.json'));
   // json.pages = json.pages.slice(0, 2);
 
   const base64 = await instance.jsonToPDFBase64(json, {
-    assetLoadTimeout: 60 * 1000 * 4,
+    skipFontError: true,
   });
 
   fs.writeFileSync('out.pdf', base64, 'base64');

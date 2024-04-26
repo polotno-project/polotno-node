@@ -23,7 +23,6 @@ const downloadVideo = async (url, destination) => {
 };
 
 // 2. Convert it into webm format
-
 const convertToWebM = (input, output) => {
   return new Promise((resolve, reject) => {
     ffmpeg(input)
@@ -74,9 +73,7 @@ const cachedVideoToDataURL = async (url) => {
 };
 
 function printProgress(progress) {
-  process.stdout.clearLine(0);
-  process.stdout.cursorTo(0);
-  process.stdout.write('Rendering frame: ' + progress + '%');
+  console.log('Rendering frame: ' + progress + '%');
 }
 
 module.exports.jsonToVideo = async function jsonToVideo(
@@ -103,7 +100,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
   );
 
   const duration = json.pages.reduce((acc, page) => {
-    return acc + page.duration;
+    return acc + (page.duration ?? 5000);
   }, 0);
   const parallel = attrs.parallel || 5;
 
