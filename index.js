@@ -45,7 +45,9 @@ const minimal_args = [
   '--no-sandbox',
   '--no-zygote',
   '--password-store=basic',
-  !isMacOs && '--use-gl=swiftshader',
+  // this line  breaks the rendering on most of OS
+  // it doesn't allow creating of pages
+  //'--use-gl=swiftshader',
   '--use-mock-keychain',
   '--font-render-hinting=none',
   '--disable-font-subpixel-positioning',
