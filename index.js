@@ -48,6 +48,7 @@ const minimal_args = [
   // this line  breaks the rendering on most of OS
   // it doesn't allow creating of pages
   //'--use-gl=swiftshader',
+  '--disable-gpu',
   '--use-mock-keychain',
   '--font-render-hinting=none',
   '--disable-font-subpixel-positioning',

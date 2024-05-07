@@ -4,7 +4,6 @@ const axios = require('axios');
 const path = require('path');
 
 const tmp = require('tmp');
-
 tmp.setGracefulCleanup();
 
 const downloadVideo = async (url, destination) => {
@@ -50,24 +49,23 @@ const fileToDataUrl = (filename) => {
   });
 };
 
-const videoToDataURL = async (url) => {
-  console.log('downloading', url);
+const videoToDataURL = async (url, tempFolder) => {
   const filename = Math.random().toString(36).substring(7);
-  const tempFolder = tmp.dirSync();
   const destination = path.join(tempFolder.name, filename + '.mp4');
   await downloadVideo(url, destination);
   const webmFile = destination.replace('.mp4', '.webm');
-  console.log('converting to webm', url);
   await convertToWebM(destination, webmFile);
-  const dataUrl = await fileToDataUrl(webmFile);
-  fs.rmSync(tempFolder.name, { recursive: true });
-  return dataUrl;
+  const dataURL = await fileToDataUrl(webmFile);
+  return {
+    dataURL,
+    file: webmFile,
+  };
 };
 
 const urlCache = {};
-const cachedVideoToDataURL = async (url) => {
+const cachedVideoToDataURL = async (url, tempFolder) => {
   if (!urlCache[url]) {
-    urlCache[url] = videoToDataURL(url);
+    urlCache[url] = videoToDataURL(url, tempFolder);
   }
   return urlCache[url];
 };
@@ -76,11 +74,7 @@ function printProgress(progress) {
   console.log('Rendering frame: ' + progress + '%');
 }
 
-module.exports.jsonToVideo = async function jsonToVideo(
-  createInstance,
-  json,
-  attrs
-) {
+module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
   const tempFolder = tmp.dirSync();
 
   const videoEls = [];
@@ -95,7 +89,9 @@ module.exports.jsonToVideo = async function jsonToVideo(
 
   await Promise.all(
     videoEls.map(async (el) => {
-      el.src = await cachedVideoToDataURL(el.src);
+      const { dataURL, file } = await cachedVideoToDataURL(el.src, tempFolder);
+      el.src = dataURL;
+      el.file = file;
     })
   );
 
@@ -134,7 +130,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
 
   await Promise.all(
     chunks.map(async (chunk, chunkIndex) => {
-      const instance = await createInstance();
+      const instance = typeof inst === 'function' ? await inst() : inst;
       const page = await instance.createPage();
       await page.evaluate(async (json) => {
         store.loadJSON(json);
@@ -201,65 +197,72 @@ module.exports.jsonToVideo = async function jsonToVideo(
         const progress = ((finishedFramesNumber / framesNumber) * 100).toFixed(
           1
         );
-        printProgress(progress);
+        // printProgress(progress);
       }
-      // TODO: why can't we just close the one created page?
-      // const browserPages = await instance.browser.pages();
-      // for (let i = 0; i < browserPages.length; i++) {
-      //   await browserPages[i].close();
-      // }
       await page.close();
-      if (!attrs.keepInstance) {
+      if (typeof inst === 'function') {
         await instance.close();
       }
     })
   );
 
-  // for (let i = 0; i < frames; i++) {
-  //   let currentTime = i * timePerFrame;
-  //   if (i === 0) {
-  //     // offset the very first frame to enable animation start
-  //     currentTime = 1;
-  //   }
-  //   if (i === frames - 1) {
-  //     // offset the very last frame to enable animation end
-  //     currentTime = duration - 1;
-  //   }
-
-  //   const dataURL = await page.evaluate(
-  //     async (json, attrs, currentTime) => {
-  //       store.setCurrentTime(currentTime);
-  //       const currentPage = store.pages.find((p) => {
-  //         return (
-  //           store.currentTime >= p.startTime &&
-  //           store.currentTime < p.startTime + p.duration
-  //         );
-  //       });
-  //       const url = await store.toDataURL({
-  //         pixelRatio: 0.5,
-  //         ...attrs,
-  //         pageId: currentPage?.id,
-  //       });
-  //       return url;
-  //     },
-  //     json,
-  //     attrs || {},
-  //     currentTime
-  //   );
-  //   const progress = ((i / (frames - 1)) * 100).toFixed(1);
-  //   printProgress(progress);
-  //   fs.mkdirSync('./tmp', { recursive: true });
-  //   fs.writeFileSync(`./tmp/${i}.png`, dataURL.split(',')[1], 'base64');
-  // }
+  const inputs = [];
+  let pageStartTime = 0;
+  for (const page of json.pages) {
+    for (const el of page.children) {
+      if (el.type === 'video') {
+        const elStartTime = el.startTime * el.duration;
+        const elDuration = Math.min(
+          page.duration,
+          el.duration * (el.endTime - el.startTime)
+        );
+        const elEndTime = elStartTime + elDuration;
+        inputs.push({
+          file: el.file,
+          inputStartTime: elStartTime,
+          inputEndTime: elEndTime,
+          outputStartTime: pageStartTime,
+          outputEndTime: pageStartTime + page.duration,
+        });
+      }
+    }
+    pageStartTime += page.duration;
+  }
 
   const format = attrs.out.split('.').pop() || 'mp4';
 
   await new Promise((resolve, reject) => {
-    ffmpeg()
-      .input(`${tempFolder.name}/%d.png`) // Make sure your images are named with numbers, e.g. 1.jpg, 2.jpg, etc.
+    const ffmpegCmd = ffmpeg()
+      .input(`${tempFolder.name}/%d.png`)
       .inputFPS(fps)
-      // .videoCodec('libx265')
-      .outputOptions('-pix_fmt yuva420p')
+      .videoCodec('libx264')
+      .outputOptions('-pix_fmt yuv420p');
+
+    // Add each audio segment as a separate input
+    inputs.forEach((input, index) => {
+      const inputStartSec = (input.inputStartTime / 1000).toFixed(3);
+      const inputDurationSec = (
+        (input.inputEndTime - input.inputStartTime) /
+        1000
+      ).toFixed(3);
+      const outputOffsetSec = (input.outputStartTime / 1000).toFixed(3);
+
+      // Apply `-itsoffset` before each input file to shift its audio stream
+      ffmpegCmd
+        .inputOptions([`-itsoffset ${outputOffsetSec}`]) // Shift the input time
+        .input(input.file) // Add the actual input file
+        .inputOptions([`-ss ${inputStartSec}`, `-t ${inputDurationSec}`]); // Specify the timing to cut the audio
+    });
+
+    // Map the video stream from the image sequence
+    ffmpegCmd.outputOptions(['-map 0:v']);
+
+    // Map each audio stream
+    inputs.forEach((_, index) => {
+      ffmpegCmd.outputOptions([`-map ${index + 1}:a`]);
+    });
+
+    ffmpegCmd
       .format(format)
       .on('end', () => resolve())
       .on('error', (err) => reject(err))
