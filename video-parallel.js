@@ -194,10 +194,10 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
           'base64'
         );
         finishedFramesNumber += 1;
-        const progress = ((finishedFramesNumber / framesNumber) * 100).toFixed(
-          1
-        );
-        // printProgress(progress);
+        if (attrs.onProgress) {
+          const progress = finishedFramesNumber / framesNumber;
+          attrs.onProgress(progress);
+        }
       }
       await page.close();
       if (typeof inst === 'function') {
