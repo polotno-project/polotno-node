@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.9.11] - 2024-05-07
 
+- `onProgress` option for video export
+
+## [2.9.11] - 2024-05-07
+
 - Add `--disable-gpu` flag to the default browser options. It should drastically improve performance
 - Audio support for video export
 
