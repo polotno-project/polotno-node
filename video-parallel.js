@@ -50,12 +50,14 @@ const fileToDataUrl = (filename) => {
 };
 
 const videoToDataURL = async (url, tempFolder) => {
+  console.log('Downloading video: ' + url.slice(0, 50) + '...');
   const filename = Math.random().toString(36).substring(7);
   const destination = path.join(tempFolder.name, filename + '.mp4');
   await downloadVideo(url, destination);
   const webmFile = destination.replace('.mp4', '.webm');
   await convertToWebM(destination, webmFile);
   const dataURL = await fileToDataUrl(webmFile);
+  console.log('Downloading video finished: ' + url.slice(0, 50) + '...');
   return {
     dataURL,
     file: webmFile,
@@ -69,10 +71,6 @@ const cachedVideoToDataURL = async (url, tempFolder) => {
   }
   return urlCache[url];
 };
-
-function printProgress(progress) {
-  console.log('Rendering frame: ' + progress + '%');
-}
 
 module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
   const tempFolder = tmp.dirSync();
@@ -169,6 +167,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
             }
           });
         }
+        const startTime = Date.now();
         const dataURL = await page.evaluate(
           async (json, attrs, currentTime) => {
             store.setCurrentTime(currentTime);
@@ -195,8 +194,9 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
         );
         finishedFramesNumber += 1;
         if (attrs.onProgress) {
+          const frameTime = Date.now() - startTime;
           const progress = finishedFramesNumber / framesNumber;
-          attrs.onProgress(progress);
+          attrs.onProgress(progress, frameTime);
         }
       }
       await page.close();
