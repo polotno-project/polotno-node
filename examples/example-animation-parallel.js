@@ -17,7 +17,6 @@ async function run() {
     json,
     {
       out: 'out.mp4',
-      parallel: 1,
       onProgress: (progress, frameTime) => {
         console.log(progress, frameTime);
       },
