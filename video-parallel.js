@@ -179,6 +179,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
             });
             const url = await store.toDataURL({
               ...attrs,
+              _skipTimeout: true,
               pageId: currentPage?.id,
             });
             return url;
