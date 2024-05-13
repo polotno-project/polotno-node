@@ -180,6 +180,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
             const url = await store.toDataURL({
               ...attrs,
               _skipTimeout: true,
+              mimeType: 'image/jpeg',
               pageId: currentPage?.id,
             });
             return url;
@@ -189,7 +190,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
           currentTime
         );
         fs.writeFileSync(
-          `${tempFolder.name}/${frameIndex}.png`,
+          `${tempFolder.name}/${frameIndex}.jpeg`,
           dataURL.split(',')[1],
           'base64'
         );
@@ -234,7 +235,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
 
   await new Promise((resolve, reject) => {
     const ffmpegCmd = ffmpeg()
-      .input(`${tempFolder.name}/%d.png`)
+      .input(`${tempFolder.name}/%d.jpeg`)
       .inputFPS(fps)
       .videoCodec('libx264')
       .outputOptions('-pix_fmt yuv420p');
