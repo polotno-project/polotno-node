@@ -8,7 +8,7 @@ config();
 async function run() {
   console.time('render');
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/simple-animation.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/video_private.json'));
   await jsonToVideo(
     () =>
       createInstance({

@@ -261,7 +261,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
 
     // Map each audio stream
     inputs.forEach((_, index) => {
-      ffmpegCmd.outputOptions([`-map ${index + 1}:a`]);
+      ffmpegCmd.outputOptions([`-map ${index + 1}:a?`]);
     });
 
     ffmpegCmd
