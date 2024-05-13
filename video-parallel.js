@@ -238,7 +238,8 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
       .input(`${tempFolder.name}/%d.jpeg`)
       .inputFPS(fps)
       .videoCodec('libx264')
-      .outputOptions('-pix_fmt yuv420p');
+      .outputOptions('-pix_fmt yuv420p')
+      .videoFilters('scale=trunc(iw/2)*2:trunc(ih/2)*2'); // Ensure dimensions are divisible by 2
 
     // Add each audio segment as a separate input
     inputs.forEach((input, index) => {
@@ -267,7 +268,12 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
     ffmpegCmd
       .format(format)
       .on('end', () => resolve())
-      .on('error', (err) => reject(err))
+      .on('error', (err, stdout, stderr) => {
+        console.log(err.message);
+        console.log('stdout:\n' + stdout);
+        console.log('stderr:\n' + stderr);
+        reject(err);
+      })
       .save(attrs.out);
   });
 
