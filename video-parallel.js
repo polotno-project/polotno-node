@@ -65,13 +65,13 @@ const videoToDataURL = async (url, tempFolder) => {
   console.log('Converting video to webm: ' + mp4Destination);
   const webmDestination = mp4Destination.replace('.mp4', '.webm');
   await convertToWebM(mp4Destination, webmDestination);
-  fs.unlinkSync(mp4Destination);
   const dataURL = await fileToDataUrl(webmDestination);
 
   console.log('Converting video finished: ' + webmDestination);
   return {
     dataURL,
     file: webmDestination,
+    mp4File: mp4Destination,
   };
 };
 
@@ -102,12 +102,13 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
 
     await Promise.all(
       videoEls.map(async (el) => {
-        const { dataURL, file } = await cachedVideoToDataURL(
+        const { dataURL, file, mp4File } = await cachedVideoToDataURL(
           el.src,
           tempFolder
         );
         el.src = dataURL;
         el.file = file;
+        el.mp4File = mp4File;
       })
     );
 
@@ -240,6 +241,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
           const elEndTime = elStartTime + elDuration;
           inputs.push({
             file: el.file,
+            mp4File: el.mp4File,
             inputStartTime: elStartTime,
             inputEndTime: elEndTime,
             outputStartTime: pageStartTime,
@@ -277,7 +279,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
         // Apply `-itsoffset` before each input file to shift its audio stream
         ffmpegCmd
           .inputOptions([`-itsoffset ${outputOffsetSec}`]) // Shift the input time
-          .input(input.file) // Add the actual input file
+          .input(input.mp4File) // Add the actual input file
           .inputOptions([`-ss ${inputStartSec}`, `-t ${inputDurationSec}`]); // Specify the timing to cut the audio
       });
 
