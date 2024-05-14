@@ -25,7 +25,14 @@ const downloadVideo = async (url, destination) => {
 const convertToWebM = (input, output) => {
   return new Promise((resolve, reject) => {
     ffmpeg(input)
-      .outputOptions(['-c:v libvpx', '-crf 30', '-b:v 1000k'])
+      .outputOptions([
+        '-c:v libvpx',
+        '-crf 30',
+        '-b:v 1000k',
+        '-quality realtime',
+        '-speed 4',
+        '-threads 4',
+      ])
       .output(output)
       .on('start', () => {})
       .on('end', () => {
@@ -53,17 +60,18 @@ const videoToDataURL = async (url, tempFolder) => {
   const shortUrl = url.slice(0, 50) + '...';
   console.log('Downloading video: ' + shortUrl);
   const filename = Math.random().toString(36).substring(7);
-  const destination = path.join(tempFolder.name, filename + '.mp4');
-  await downloadVideo(url, destination);
-  console.log('Converting video to webm: ' + shortUrl);
-  const webmFile = destination.replace('.mp4', '.webm');
-  await convertToWebM(destination, webmFile);
-  fs.unlinkSync(destination);
-  const dataURL = await fileToDataUrl(webmFile);
-  console.log('Downloading video finished: ' + url.slice(0, 50) + '...');
+  const mp4Destination = path.join(tempFolder.name, filename + '.mp4');
+  await downloadVideo(url, mp4Destination);
+  console.log('Converting video to webm: ' + mp4Destination);
+  const webmDestination = mp4Destination.replace('.mp4', '.webm');
+  await convertToWebM(mp4Destination, webmDestination);
+  fs.unlinkSync(mp4Destination);
+  const dataURL = await fileToDataUrl(webmDestination);
+
+  console.log('Converting video finished: ' + webmDestination);
   return {
     dataURL,
-    file: webmFile,
+    file: webmDestination,
   };
 };
 
@@ -244,6 +252,11 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
 
     const format = attrs.out.split('.').pop() || 'mp4';
 
+    // print all files in temp folder
+    fs.readdirSync(tempFolder.name).forEach((file) => {
+      console.log(file);
+    });
+    console.time('ffmpeg');
     await new Promise((resolve, reject) => {
       const ffmpegCmd = ffmpeg()
         .input(`${tempFolder.name}/%d.jpeg`)
@@ -290,6 +303,7 @@ module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
   } catch (e) {
     throw e;
   } finally {
+    console.timeEnd('ffmpeg');
     fs.rmSync(tempFolder.name, { recursive: true });
   }
 };
