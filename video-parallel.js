@@ -83,8 +83,14 @@ const cachedVideoToDataURL = async (url, tempFolder) => {
   return urlCache[url];
 };
 
-module.exports.jsonToVideo = async function jsonToVideo(inst, json, attrs) {
-  const tempFolder = tmp.dirSync();
+module.exports.jsonToVideo = async function jsonToVideo(
+  inst,
+  json,
+  attrs = {}
+) {
+  const tempFolder = tmp.dirSync({
+    tmpdir: attrs.tmpdir,
+  });
   // const tempFolder = {
   //   name: './temp',
   // };
