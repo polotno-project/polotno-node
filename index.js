@@ -56,6 +56,8 @@ const minimal_args = [
   '--no-zygote',
   '--password-store=basic',
   '--allow-running-insecure-content',
+  // do we need that?
+  // '--single-process',
 
   // this line  breaks the rendering on most of OS
   // it doesn't allow creating of pages

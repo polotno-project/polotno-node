@@ -260,10 +260,6 @@ module.exports.jsonToVideo = async function jsonToVideo(
 
     const format = attrs.out.split('.').pop() || 'mp4';
 
-    // print all files in temp folder
-    fs.readdirSync(tempFolder.name).forEach((file) => {
-      console.log(file);
-    });
     console.time('ffmpeg');
     await new Promise((resolve, reject) => {
       const ffmpegCmd = ffmpeg()

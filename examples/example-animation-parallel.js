@@ -8,7 +8,7 @@ config();
 async function run() {
   console.time('render');
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/video_private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/simple-animation.json'));
   await jsonToVideo(
     () =>
       createInstance({
@@ -17,6 +17,7 @@ async function run() {
     json,
     {
       out: 'out.mp4',
+      fps: 30,
       // quality: 1,
       // mimeType: 'image/jpeg',
       onProgress: (progress, frameTime) => {
