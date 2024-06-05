@@ -127,7 +127,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
     const timePerFrame = 1000 / fps;
 
     // loop through the images and add each to the animation
-    const framesNumber = Math.floor((duration / 1000) * fps);
+    const framesNumber = Math.floor((duration / 1000) * fps) || 1;
     const frames = Array.from(Array(framesNumber).keys());
 
     // split frames into parallel chunks
@@ -237,12 +237,17 @@ module.exports.jsonToVideo = async function jsonToVideo(
     const inputs = [];
     let pageStartTime = 0;
     for (const page of json.pages) {
+      const pageDuration = page.duration || 5000;
       for (const el of page.children) {
         if (el.type === 'video') {
-          const elStartTime = el.startTime * el.duration;
+          const startTime = el.startTime || 0;
+          const endTime = el.endTime || 1;
+          const dur = el.duration || 5000;
+          const elStartTime = startTime * dur;
+
           const elDuration = Math.min(
-            page.duration,
-            el.duration * (el.endTime - el.startTime)
+            pageDuration,
+            dur * (endTime - startTime)
           );
           const elEndTime = elStartTime + elDuration;
           inputs.push({
@@ -251,16 +256,15 @@ module.exports.jsonToVideo = async function jsonToVideo(
             inputStartTime: elStartTime,
             inputEndTime: elEndTime,
             outputStartTime: pageStartTime,
-            outputEndTime: pageStartTime + page.duration,
+            outputEndTime: pageStartTime + pageDuration,
           });
         }
       }
-      pageStartTime += page.duration;
+      pageStartTime += pageDuration;
     }
 
     const format = attrs.out.split('.').pop() || 'mp4';
 
-    console.time('ffmpeg');
     await new Promise((resolve, reject) => {
       const ffmpegCmd = ffmpeg()
         .input(`${tempFolder.name}/%d.jpeg`)
@@ -307,7 +311,6 @@ module.exports.jsonToVideo = async function jsonToVideo(
   } catch (e) {
     throw e;
   } finally {
-    console.timeEnd('ffmpeg');
     fs.rmSync(tempFolder.name, { recursive: true });
   }
 };
