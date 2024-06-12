@@ -56,7 +56,7 @@ const fileToDataUrl = (filename) => {
   });
 };
 
-const videoToDataURL = async (url, tempFolder) => {
+const convertVideo = async (url, tempFolder) => {
   const shortUrl = url.slice(0, 50) + '...';
   console.log('Downloading video: ' + shortUrl);
   const filename = Math.random().toString(36).substring(7);
@@ -73,14 +73,6 @@ const videoToDataURL = async (url, tempFolder) => {
     file: webmDestination,
     mp4File: mp4Destination,
   };
-};
-
-const urlCache = {};
-const cachedVideoToDataURL = async (url, tempFolder) => {
-  if (!urlCache[url]) {
-    urlCache[url] = videoToDataURL(url, tempFolder);
-  }
-  return urlCache[url];
 };
 
 module.exports.jsonToVideo = async function jsonToVideo(
@@ -108,7 +100,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
 
     await Promise.all(
       videoEls.map(async (el) => {
-        const { dataURL, file, mp4File } = await cachedVideoToDataURL(
+        const { dataURL, file, mp4File } = await convertVideo(
           el.src,
           tempFolder
         );
