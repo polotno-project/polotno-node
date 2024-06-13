@@ -291,6 +291,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
 
       ffmpegCmd
         .format(format)
+        .audioCodec('aac')
         .on('end', () => resolve())
         .on('error', (err, stdout, stderr) => {
           console.log(err.message);

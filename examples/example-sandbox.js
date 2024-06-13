@@ -21,7 +21,7 @@ async function run() {
       // quality: 1,
       // mimeType: 'image/jpeg',
       onProgress: (progress, frameTime) => {
-        // console.log(progress, frameTime);
+        console.log(progress, frameTime);
       },
     }
   );

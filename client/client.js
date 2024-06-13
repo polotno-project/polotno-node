@@ -35,6 +35,7 @@ window.config = {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   React.createElement(WorkspaceCanvas, {
+    visiblePagesOffset: 0,
     store,
     components: { PageControls: () => null, Tooltip: () => null },
   })
