@@ -102,7 +102,8 @@ module.exports.jsonToVideo = async function jsonToVideo(
       videoEls.map(async (el) => {
         const { dataURL, file, mp4File } = await convertVideo(
           el.src,
-          tempFolder
+          tempFolder,
+          attrs.skipWebm
         );
         el.src = dataURL;
         el.file = file;
