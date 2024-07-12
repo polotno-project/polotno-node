@@ -76,13 +76,10 @@ const minimal_args = [
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
   return puppeteer.launch({
     args: [
-      ...chrome.args,
+      ...(isWindows ? [] : chrome.args),
       ...minimal_args,
       '--disable-web-security',
       '--allow-file-access-from-files',
-      // more info about --disable-dev-shm-usage
-      // https://github.com/puppeteer/puppeteer/issues/1175#issuecomment-369728215
-      // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
       ...browserArgs,
     ],
     defaultViewport: chrome.defaultViewport,
