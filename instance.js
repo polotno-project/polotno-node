@@ -179,7 +179,11 @@ module.exports.createInstance = async ({
         const message = error.toString();
         const isFontError = message.indexOf('Timeout for loading font') >= 0;
         const skipError = isFontError && args[1]?.skipFontError;
-        if (!skipError) {
+
+        const isImageError = message.indexOf('image ') >= 0;
+        const skipImageError = isImageError && args[1]?.skipImageError;
+
+        if (!skipError && !skipImageError) {
           throw new Error(error);
         }
       }

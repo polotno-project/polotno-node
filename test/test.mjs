@@ -176,6 +176,20 @@ test('Undefined fonts should fallback and we can skip it', async (t) => {
   await instance.close();
 });
 
+test('skip error on image loading', async (t) => {
+  const instance = await createInstance({ key });
+
+  await matchImageSnapshot({
+    jsonFileName: 'skip-image-error.json',
+    instance,
+    t,
+    attrs: {
+      skipImageError: true,
+    },
+  });
+  await instance.close();
+});
+
 // when a text has bad font (we can't load it)
 // we should still wait and then try to resize text to fit bounding box
 test('Bad font resize', async (t) => {

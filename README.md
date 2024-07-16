@@ -201,11 +201,21 @@ const url = await instance.jsonToPDFDataURL(json, {
 
 ### `attrs.skipFontError`
 
-If `skipFontError` is true, it will not throw error font is not loaded or not defined. By default it is `false`.
+If `skipFontError` is true, it will not throw error font is not loaded or not defined. By default it is `false`, so it will throw error.
 
 ```js
 const url = await instance.jsonToPDFDataURL(json, {
   skipFontError: true,
+});
+```
+
+### `attrs.skipImageError`
+
+If `skipImageError` is true, it will not throw error an can't be loaded. By default it is `false`, so it will throw error.
+
+```js
+const url = await instance.jsonToPDFDataURL(json, {
+  skipImageError: true,
 });
 ```
 
