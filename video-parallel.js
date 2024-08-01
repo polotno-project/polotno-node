@@ -26,20 +26,18 @@ const convertToWebM = (input, output) => {
   return new Promise((resolve, reject) => {
     ffmpeg(input)
       .outputOptions([
-        '-c:v libvpx',
+        '-c:v libvpx-vp9',
         '-crf 30',
-        '-b:v 1000k',
-        '-quality realtime',
-        '-speed 4',
-        '-threads 4',
+        '-b:v 0',
+        '-b:a 128k',
+        '-c:a libopus',
       ])
       .output(output)
-      .on('start', () => {})
       .on('end', () => {
         resolve();
       })
       .on('error', (err) => {
-        console.log('Error occurred: ' + err.message);
+        console.error('Error occurred: ' + err.message);
         reject(err);
       })
       .run();
@@ -62,12 +60,12 @@ const convertVideo = async (url, tempFolder) => {
   const filename = Math.random().toString(36).substring(7);
   const mp4Destination = path.join(tempFolder.name, filename + '.mp4');
   await downloadVideo(url, mp4Destination);
-  console.log('Converting video to webm: ' + mp4Destination);
+  console.log('Converting video to webm: ' + filename);
   const webmDestination = mp4Destination.replace('.mp4', '.webm');
   await convertToWebM(mp4Destination, webmDestination);
   const dataURL = await fileToDataUrl(webmDestination);
 
-  console.log('Converting video finished: ' + webmDestination);
+  console.log('Converting video finished: ' + filename);
   return {
     dataURL,
     file: webmDestination,

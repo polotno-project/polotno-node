@@ -1,23 +1,32 @@
 const fs = require('fs');
-const { createInstance } = require('../index.js');
+const { createInstance } = require('../index.js'); // it should be require('polotno-node')
+const { jsonToVideo } = require('../video-parallel.js'); // it should be require('polotno-node/video-parallel.js')
+
+const { config } = require('dotenv');
+config();
 
 async function run() {
-  // create working instance
-  const instance = await createInstance({
-    // this is a demo key just for that project
-    // (!) please don't use it in your projects
-    // to create your own API key please go here: https://polotno.dev/cabinet
-    key: 'nFA5H9elEytDyPyvKL7T',
-  });
-
+  console.time('render');
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
-
-  const base64 = await instance.jsonToImageBase64(json);
-
-  fs.writeFileSync('out.png', base64, 'base64');
-
-  await instance.close();
+  await jsonToVideo(
+    () =>
+      createInstance({
+        key: process.env.POLOTNO_KEY,
+      }),
+    json,
+    {
+      out: 'out.mp4',
+      // fps: 30,
+      // quality: 1,
+      // mimeType: 'image/jpeg',
+      onProgress: (progress, frameTime) => {
+        // console.log(progress, frameTime);
+      },
+    }
+  );
+  console.timeEnd('render');
+  process.exit(0);
 }
 
-run();
+run().catch((e) => console.error(e));
