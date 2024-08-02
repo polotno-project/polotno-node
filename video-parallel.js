@@ -31,6 +31,9 @@ const convertToWebM = (input, output) => {
         '-b:v 0',
         '-b:a 128k',
         '-c:a libopus',
+        '-cpu-used 4', // Faster encoding with slight quality loss
+        '-deadline realtime', // Fastest encoding mode
+        '-threads 0', // Use all available CPU cores
       ])
       .output(output)
       .on('end', () => {
