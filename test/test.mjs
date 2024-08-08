@@ -253,3 +253,18 @@ test('buffer canvas rendering', async (t) => {
   });
   await instance.close();
 });
+
+test('progress on pdf export', async (t) => {
+  const instance = await createInstance({ key });
+
+  const json = { pages: [{ id: '1' }] };
+
+  let progressCalled = false;
+  await instance.jsonToPDFDataURL(json, {
+    onProgress: () => {
+      progressCalled = true;
+    },
+  });
+  await instance.close();
+  t.assert(progressCalled);
+});

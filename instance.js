@@ -147,6 +147,12 @@ module.exports.createInstance = async ({
           }
         });
       }
+      if (args[1]?.onProgress) {
+        const originalProgress = args[1].onProgress;
+        await page.exposeFunction('onProgress', async (progress) => {
+          originalProgress(progress);
+        });
+      }
       if (args[1]?.textOverflow) {
         await page.evaluate((overflow) => {
           if (window.config && window.config.unstable_setTextOverflow) {
@@ -242,6 +248,11 @@ module.exports.createInstance = async ({
     return await run(
       async (json, attrs) => {
         store.loadJSON(json);
+        if (window.onProgress) {
+          attrs.onProgress = (progress) => {
+            window.onProgress(progress);
+          };
+        }
         await store.waitLoading();
         return await store.toPDFDataURL(attrs);
       },
@@ -250,15 +261,15 @@ module.exports.createInstance = async ({
     );
   };
 
+  const jsonToPDFBase64 = async (json, attrs) => {
+    const url = await jsonToPDFDataURL(json, attrs);
+    return url.split('base64,')[1];
+  };
+
   const jsonToBlob = async (json, attrs) => {
     const base64 = await jsonToImageBase64(json, attrs);
     const blob = Buffer.from(base64, 'base64');
     return blob;
-  };
-
-  const jsonToPDFBase64 = async (json, attrs) => {
-    const url = await jsonToPDFDataURL(json, attrs);
-    return url.split('base64,')[1];
   };
 
   return {
