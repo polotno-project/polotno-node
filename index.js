@@ -73,6 +73,14 @@ const minimal_args = [
   '--text-rendering=geometricprecision',
 ].filter(Boolean);
 
+const browserProps = {
+  headless: 'new',
+  // make large timeout, because some renders may take a lot of time
+  // like large PDF or video render
+  protocolTimeout: 60 * 60 * 1000,
+  ignoreHTTPSErrors: true,
+};
+
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
   return puppeteer.launch({
     args: [
@@ -83,13 +91,10 @@ async function createBrowser({ browserArgs = [], ...rest } = {}) {
       ...browserArgs,
     ],
     defaultViewport: chrome.defaultViewport,
-    headless: 'new',
-    // make default protocol timeout bigger
-    // because some clients had issues with it
-    protocolTimeout: 10 * 60 * 1000,
+
     executablePath:
       isMacOs || isWindows ? undefined : await chrome.executablePath(),
-    ignoreHTTPSErrors: true,
+    ...browserProps,
     ...rest,
   });
 }
