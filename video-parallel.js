@@ -57,21 +57,23 @@ const fileToDataUrl = (filename) => {
   });
 };
 
-const convertVideo = async (url, tempFolder) => {
+const convertVideo = async (url, tempFolder, skipWebm) => {
   const shortUrl = url.slice(0, 50) + '...';
   console.log('Downloading video: ' + shortUrl);
   const filename = Math.random().toString(36).substring(7);
   const mp4Destination = path.join(tempFolder.name, filename + '.mp4');
   await downloadVideo(url, mp4Destination);
-  console.log('Converting video to webm: ' + filename);
-  const webmDestination = mp4Destination.replace('.mp4', '.webm');
-  await convertToWebM(mp4Destination, webmDestination);
-  const dataURL = await fileToDataUrl(webmDestination);
+  let dataURL = '';
+  if (!skipWebm) {
+    console.log('Converting video to webm: ' + filename);
+    const webmDestination = mp4Destination.replace('.mp4', '.webm');
+    await convertToWebM(mp4Destination, webmDestination);
+    dataURL = await fileToDataUrl(webmDestination);
+    console.log('Converting video finished: ' + filename);
+  }
 
-  console.log('Converting video finished: ' + filename);
   return {
     dataURL,
-    file: webmDestination,
     mp4File: mp4Destination,
   };
 };
@@ -106,7 +108,9 @@ module.exports.jsonToVideo = async function jsonToVideo(
           tempFolder,
           attrs.skipWebm
         );
-        el.src = dataURL;
+        if (!attrs.skipWebm) {
+          el.src = dataURL;
+        }
         el.file = file;
         el.mp4File = mp4File;
       })
@@ -115,9 +119,13 @@ module.exports.jsonToVideo = async function jsonToVideo(
     const duration = json.pages.reduce((acc, page) => {
       return acc + (page.duration ?? 5000);
     }, 0);
+
+    if (duration === 0) {
+      throw new Error('Video duration is 0');
+    }
     const parallel = attrs.parallel || 5;
 
-    const fps = attrs.fps || 15;
+    const fps = attrs.fps || 30;
     const timePerFrame = 1000 / fps;
 
     // loop through the images and add each to the animation
@@ -149,6 +157,8 @@ module.exports.jsonToVideo = async function jsonToVideo(
       chunks.map(async (chunk, chunkIndex) => {
         const instance = typeof inst === 'function' ? await inst() : inst;
         const page = await instance.createPage();
+        page.setDefaultNavigationTimeout(60000); // Increase timeout to 60 seconds
+
         await page.evaluate(async (json) => {
           store.loadJSON(json);
           await store.waitLoading();
@@ -217,7 +227,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
           finishedFramesNumber += 1;
           if (attrs.onProgress) {
             const frameTime = Date.now() - startTime;
-            const progress = finishedFramesNumber / framesNumber;
+            const progress = (finishedFramesNumber / framesNumber) * 0.95;
             attrs.onProgress(progress, frameTime);
           }
         }
@@ -251,6 +261,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
             inputEndTime: elEndTime,
             outputStartTime: pageStartTime,
             outputEndTime: pageStartTime + pageDuration,
+            volume: el.volume,
           });
         }
       }
@@ -275,12 +286,16 @@ module.exports.jsonToVideo = async function jsonToVideo(
           1000
         ).toFixed(3);
         const outputOffsetSec = (input.outputStartTime / 1000).toFixed(3);
+        const volume = input.volume !== undefined ? input.volume : 1;
 
         // Apply `-itsoffset` before each input file to shift its audio stream
         ffmpegCmd
           .inputOptions([`-itsoffset ${outputOffsetSec}`]) // Shift the input time
           .input(input.mp4File) // Add the actual input file
           .inputOptions([`-ss ${inputStartSec}`, `-t ${inputDurationSec}`]); // Specify the timing to cut the audio
+
+        // Apply volume filter to respect the input volume
+        ffmpegCmd.audioFilters(`volume=${volume}`);
       });
 
       // Map the video stream from the image sequence

@@ -1,24 +1,29 @@
 const fs = require('fs');
-const { createInstance } = require('../index.js');
+const { createInstance } = require('../index.js'); // it should be require('polotno-node')
+const { jsonToVideo } = require('../video-parallel.js'); // it should be require('polotno-node/video-parallel.js')
 
 const { config } = require('dotenv');
 config();
 
 async function run() {
-  // create working instance
-  const instance = await createInstance({
-    key: process.env.POLOTNO_KEY,
-  });
-
+  console.time('render');
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
-
-  const base64 = await instance.jsonToImageBase64(json);
-
-  fs.writeFileSync('out.png', base64, 'base64');
-
-  await instance.close();
-  console.log('Done!');
+  await jsonToVideo(
+    () =>
+      createInstance({
+        key: process.env.POLOTNO_KEY,
+      }),
+    json,
+    {
+      out: 'out2od.mp4',
+      onProgress: (progress, frameTime) => {
+        console.log('progress', progress);
+      },
+    }
+  );
+  console.timeEnd('render');
+  process.exit(0);
 }
 
-run();
+run().catch((e) => console.error(e));

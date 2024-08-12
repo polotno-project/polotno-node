@@ -17,9 +17,6 @@ async function run() {
     json,
     {
       out: 'out.mp4',
-      fps: 30,
-      // quality: 1,
-      // mimeType: 'image/jpeg',
       onProgress: (progress, frameTime) => {
         // console.log(progress, frameTime);
       },
