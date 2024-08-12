@@ -1,7 +1,12 @@
 # Polotno-node
 
-Export Polotno JSON into images and pdf files. NodeJS package to work with [Polotno Store API](https://polotno.dev/).
-Should work fine with lambda functions as well.
+Export Polotno JSON into images and pdf files. NodeJS package to work with [Polotno SDK](https://polotno.com/).
+
+> **🚀 Optimize Your Workflow with Cloud Render API!**
+>
+> Instead of managing your own server infrastructure with `polotno-node`, consider using our [Cloud Render API](https://polotno.com/cloud-render). It provides all the powerful export capabilities of Polotno with none of the server maintenance. Seamlessly convert your designs into images, PDFs, and videos at scale, with the reliability and speed of cloud-based rendering.
+>
+> **Get started now and focus on what truly matters—creating stunning designs!**
 
 ## Usage
 
