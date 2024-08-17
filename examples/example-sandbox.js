@@ -13,10 +13,18 @@ async function run() {
     () =>
       createInstance({
         key: process.env.POLOTNO_KEY,
+        executablePath:
+          process.platform === 'darwin'
+            ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+            : undefined,
       }),
+
     json,
+
     {
-      out: 'out2od.mp4',
+      out: 'out.mp4',
+      skipWebm: true,
+      fps: 10,
       onProgress: (progress, frameTime) => {
         console.log('progress', progress);
       },
