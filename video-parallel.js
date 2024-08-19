@@ -116,6 +116,20 @@ module.exports.jsonToVideo = async function jsonToVideo(
       })
     );
 
+    const audios = [];
+    // download all audio tracks
+    await Promise.all(
+      (json.audios || []).map(async (audio) => {
+        const filename = Math.random().toString(36).substring(7);
+        const destination = path.join(tempFolder.name, filename);
+        await downloadVideo(audio.src, destination);
+        audios.push({
+          ...audio,
+          file: destination,
+        });
+      })
+    );
+
     const duration = json.pages.reduce((acc, page) => {
       return acc + (page.duration ?? 5000);
     }, 0);
@@ -315,21 +329,31 @@ module.exports.jsonToVideo = async function jsonToVideo(
         // Map the video stream from the image sequence
         ffmpegCmd.outputOptions(['-map 0:v']);
 
-        // Prepare audio filter complex only if there are audio inputs
-        if (audioInputs.length > 0) {
-          const audioFilters = audioInputs.map(
-            (input, i) =>
-              `[${input.index}:a]adelay=${input.delay}|${input.delay},volume=${input.volume}[a${i}]`
-          );
-          const audioMerge = audioInputs.map((_, i) => `[a${i}]`).join('');
+        // Prepare audio filter complex for both video and pure audio inputs
+        const allAudioInputs = [...audioInputs, ...audios];
+        if (allAudioInputs.length > 0) {
+          const audioFilters = allAudioInputs.map((input, i) => {
+            const inputIndex = audioInputs.includes(input)
+              ? input.index
+              : audioInputs.length + i + 1;
+            return `[${inputIndex}:a]adelay=${input.delay}|${input.delay},volume=${input.volume},apad[a${i}]`;
+          });
+          const audioMerge = allAudioInputs.map((_, i) => `[a${i}]`).join('');
           const filterComplex = `${audioFilters.join(
             ';'
           )};${audioMerge}amix=inputs=${
-            audioInputs.length
-          }:duration=longest[aout]`;
+            allAudioInputs.length
+          }:dropout_transition=0,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,apad,atrim=0:${
+            duration / 1000
+          }[aout]`;
 
           ffmpegCmd.complexFilter(filterComplex);
           ffmpegCmd.outputOptions(['-map [aout]']);
+
+          // Add pure audio inputs
+          audios.forEach((audio) => {
+            ffmpegCmd.input(audio.file);
+          });
         }
 
         ffmpegCmd
