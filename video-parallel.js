@@ -276,64 +276,75 @@ module.exports.jsonToVideo = async function jsonToVideo(
         .inputFPS(fps)
         .videoCodec('libx264')
         .outputOptions('-pix_fmt yuv420p')
-        .videoFilters('scale=trunc(iw/2)*2:trunc(ih/2)*2'); // Ensure dimensions are divisible by 2
+        .videoFilters('scale=trunc(iw/2)*2:trunc(ih/2)*2');
 
       const audioInputs = [];
 
-      // Add each audio segment as a separate input
-      inputs.forEach((input, index) => {
-        const inputStartSec = (input.inputStartTime / 1000).toFixed(3);
-        const inputDurationSec = (
-          (input.inputEndTime - input.inputStartTime) /
-          1000
-        ).toFixed(3);
-        const outputOffsetMs = Math.round(input.outputStartTime);
-        console.log({ outputOffsetMs });
-        const volume = input.volume !== undefined ? input.volume : 1;
+      // Use Promise.all to handle async ffprobe calls
+      Promise.all(
+        inputs.map((input, index) => {
+          return new Promise((resolveProbe) => {
+            const inputStartSec = (input.inputStartTime / 1000).toFixed(3);
+            const inputDurationSec = (
+              (input.inputEndTime - input.inputStartTime) /
+              1000
+            ).toFixed(3);
+            const outputOffsetMs = Math.round(input.outputStartTime);
+            const volume = input.volume !== undefined ? input.volume : 1;
+
+            ffmpegCmd
+              .input(input.mp4File)
+              .inputOptions([`-ss ${inputStartSec}`, `-t ${inputDurationSec}`]);
+
+            ffmpeg.ffprobe(input.mp4File, (err, metadata) => {
+              if (
+                !err &&
+                metadata.streams.some((stream) => stream.codec_type === 'audio')
+              ) {
+                audioInputs.push({
+                  index: index + 1,
+                  delay: outputOffsetMs,
+                  volume: volume,
+                });
+              }
+              resolveProbe();
+            });
+          });
+        })
+      ).then(() => {
+        // Map the video stream from the image sequence
+        ffmpegCmd.outputOptions(['-map 0:v']);
+
+        // Prepare audio filter complex only if there are audio inputs
+        if (audioInputs.length > 0) {
+          const audioFilters = audioInputs.map(
+            (input, i) =>
+              `[${input.index}:a]adelay=${input.delay}|${input.delay},volume=${input.volume}[a${i}]`
+          );
+          const audioMerge = audioInputs.map((_, i) => `[a${i}]`).join('');
+          const filterComplex = `${audioFilters.join(
+            ';'
+          )};${audioMerge}amix=inputs=${
+            audioInputs.length
+          }:duration=longest[aout]`;
+
+          ffmpegCmd.complexFilter(filterComplex);
+          ffmpegCmd.outputOptions(['-map [aout]']);
+        }
 
         ffmpegCmd
-          .input(input.mp4File)
-          .inputOptions([`-ss ${inputStartSec}`, `-t ${inputDurationSec}`]);
-
-        audioInputs.push({
-          index: index + 1, // +1 because the first input is the image sequence
-          delay: outputOffsetMs,
-          volume: volume,
-        });
+          .format(format)
+          .audioCodec('aac')
+          .on('start', (command) => console.log('FFmpeg command:', command))
+          .on('end', () => resolve())
+          .on('error', (err, stdout, stderr) => {
+            console.error('Error:', err.message);
+            console.error('stdout:', stdout);
+            console.error('stderr:', stderr);
+            reject(err);
+          })
+          .save(attrs.out);
       });
-
-      // Map the video stream from the image sequence
-      ffmpegCmd.outputOptions(['-map 0:v']);
-
-      // Prepare audio filter complex
-      if (audioInputs.length > 0) {
-        const audioFilters = audioInputs.map(
-          (input, i) =>
-            `[${input.index}:a]adelay=${input.delay}|${input.delay},volume=${input.volume}[a${i}]`
-        );
-        const audioMerge = audioInputs.map((_, i) => `[a${i}]`).join('');
-        const filterComplex = `${audioFilters.join(
-          ';'
-        )};${audioMerge}amix=inputs=${
-          audioInputs.length
-        }:duration=longest[aout]`;
-
-        ffmpegCmd.complexFilter(filterComplex);
-        ffmpegCmd.outputOptions(['-map [aout]']);
-      }
-
-      ffmpegCmd
-        .format(format)
-        .audioCodec('aac')
-        .on('start', (command) => console.log('FFmpeg command:', command))
-        .on('end', () => resolve())
-        .on('error', (err, stdout, stderr) => {
-          console.error('Error:', err.message);
-          console.error('stdout:', stdout);
-          console.error('stderr:', stderr);
-          reject(err);
-        })
-        .save(attrs.out);
     });
   } catch (e) {
     throw e;
