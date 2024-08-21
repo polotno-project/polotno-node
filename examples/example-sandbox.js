@@ -8,7 +8,7 @@ config();
 async function run() {
   console.time('render');
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/broken-video.json'));
   await jsonToVideo(
     () =>
       createInstance({
@@ -25,6 +25,7 @@ async function run() {
       out: 'out.mp4',
       skipWebm: true,
       fps: 10,
+      parallel: 4,
       onProgress: (progress, frameTime) => {
         console.log('progress', progress);
       },

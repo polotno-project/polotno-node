@@ -153,11 +153,10 @@ module.exports.jsonToVideo = async function jsonToVideo(
       chunks.push(frames.slice(i, i + chunkSize));
     }
 
+    let lastTime = 0;
     const pages = json.pages.map((p, index) => {
-      const previousPage = json.pages[index - 1];
-      const startTime = previousPage
-        ? previousPage.startTime + previousPage.duration
-        : 0;
+      const startTime = lastTime;
+      lastTime = startTime + p.duration;
       return {
         id: p.id,
         startTime,
@@ -171,15 +170,18 @@ module.exports.jsonToVideo = async function jsonToVideo(
       chunks.map(async (chunk, chunkIndex) => {
         const instance = typeof inst === 'function' ? await inst() : inst;
         const page = await instance.createPage();
+        await page.evaluate(() => {
+          if (window.config?.onLoadError) {
+            window.config.onLoadError((error) => {
+              window._polotnoError = error;
+            });
+          } else {
+            console.error(
+              'onLoadError function is not defined in the client. Error handling will not work.'
+            );
+          }
+        });
         page.setDefaultNavigationTimeout(60000); // Increase timeout to 60 seconds
-
-        await page.evaluate(async (json) => {
-          store.loadJSON(json);
-          await store.waitLoading();
-          await new Promise((resolve) => {
-            setTimeout(resolve, 100);
-          });
-        }, json);
 
         let lastPageIndex = -1;
         for (const frameIndex of chunk) {
@@ -199,9 +201,23 @@ module.exports.jsonToVideo = async function jsonToVideo(
             );
           });
           if (storePageIndex !== lastPageIndex) {
+            await page.evaluate(async (json) => {
+              store.loadJSON(json);
+              await store.waitLoading();
+              await new Promise((resolve) => {
+                setTimeout(resolve, 100);
+              });
+            }, json);
             await page.evaluate(async (currentTime) => {
               store.setCurrentTime(currentTime);
+              store.checkActivePage();
+              store.activePage.set({
+                _rendering: true,
+              });
               await store.waitLoading();
+              await new Promise((resolve) => {
+                setTimeout(resolve, 100);
+              });
               if (window.config.unstable_setTextOverflow) {
                 window.config.unstable_setTextOverflow('resize');
               } else {
@@ -209,7 +225,8 @@ module.exports.jsonToVideo = async function jsonToVideo(
                 //   'Can not set text overflow mode. Define window.config.unstable_setTextOverflow function'
                 // );
               }
-            });
+            }, currentTime);
+            lastPageIndex = storePageIndex;
           }
           const startTime = Date.now();
           const dataURL = await page.evaluate(
@@ -233,6 +250,25 @@ module.exports.jsonToVideo = async function jsonToVideo(
             attrs || {},
             currentTime
           );
+          const error = await page.evaluate(() => window._polotnoError);
+          if (error) {
+            // clear error
+            await page.evaluate(() => {
+              window._polotnoError = null;
+            });
+            const message = error.toString();
+            const isFontError =
+              message.indexOf('Timeout for loading font') >= 0;
+            const skipError = isFontError && attrs.skipFontError;
+
+            const isImageError = message.indexOf('image ') >= 0;
+            const skipImageError = isImageError && attrs.skipImageError;
+
+            if (!skipError && !skipImageError) {
+              throw new Error(error);
+            }
+          }
+          // TODO: add error handling!!!!
           fs.writeFileSync(
             `${tempFolder.name}/${frameIndex}.jpeg`,
             dataURL.split(',')[1],
