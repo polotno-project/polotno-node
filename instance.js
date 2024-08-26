@@ -75,6 +75,8 @@ module.exports.jsonToBlob = async (page, json, attrs) => {
 
 const busyPages = [];
 
+const createdInstances = [];
+
 module.exports.createInstance = async ({
   key,
   url,
@@ -272,8 +274,9 @@ module.exports.createInstance = async ({
     return blob;
   };
 
-  return {
+  const instance = {
     close: async () => {
+      createdInstances.splice(createdInstances.indexOf(instance), 1);
       await browser.close();
     },
     firstPage,
@@ -288,4 +291,33 @@ module.exports.createInstance = async ({
     jsonToGIFBase64,
     createPage: async () => await module.exports.createPage(browser, visitPage),
   };
+
+  createdInstances.push(instance);
+  return instance;
 };
+
+// Function to close all created instances in parallel
+const closeAllInstances = async () => {
+  await Promise.all(createdInstances.map((instance) => instance.close()));
+};
+
+// Register the function to be called on process exit
+process.on('beforeExit', () => {
+  closeAllInstances().catch((error) => {
+    console.error('Error closing instances:', error);
+  });
+});
+
+// Also handle other termination signals
+['SIGINT', 'SIGTERM', 'SIGQUIT', 'exit', 'beforeExit'].forEach((signal) => {
+  process.on(signal, () => {
+    closeAllInstances()
+      .then(() => {
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('Error closing instances:', error);
+        process.exit(1);
+      });
+  });
+});

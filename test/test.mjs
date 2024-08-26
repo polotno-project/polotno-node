@@ -68,6 +68,7 @@ async function matchImageSnapshot({ jsonFileName, instance, t, attrs }) {
 
 test('sample export', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'polotno-1.json',
@@ -79,6 +80,7 @@ test('sample export', async (t) => {
 
 test('rich text support', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'rich-text.json',
@@ -93,6 +95,7 @@ test('rich text support', async (t) => {
 
 test('vertical text align', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'vertical-align.json',
@@ -107,6 +110,7 @@ test('vertical text align', async (t) => {
 
 test('optionally disable text fit', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'resize-text.json',
@@ -121,6 +125,7 @@ test('optionally disable text fit', async (t) => {
 
 test('vertical html text with align', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'vertical-align-html.json',
@@ -137,6 +142,7 @@ test('vertical html text with align', async (t) => {
 
 test('fail on timeout', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   const error = await t.throwsAsync(async () => {
@@ -149,6 +155,7 @@ test('fail on timeout', async (t) => {
 
 test('fail on font timeout', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   const json = JSON.parse(
     fs.readFileSync('./test/samples/polotno-with-text.json')
@@ -164,6 +171,7 @@ test('fail on font timeout', async (t) => {
 
 test('Undefined fonts should fallback and we can skip it', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'skip-font-error.json',
@@ -178,6 +186,7 @@ test('Undefined fonts should fallback and we can skip it', async (t) => {
 
 test('skip error on image loading', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'skip-image-error.json',
@@ -194,6 +203,7 @@ test('skip error on image loading', async (t) => {
 // we should still wait and then try to resize text to fit bounding box
 test('Bad font resize', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   await matchImageSnapshot({
     jsonFileName: 'bad-font-resize.json',
@@ -208,6 +218,8 @@ test('Bad font resize', async (t) => {
 
 test('Should clear error with no parallel pages', async (t) => {
   const instance = await createInstance({ key, useParallelPages: false });
+  t.teardown(() => instance.close());
+
   const json = JSON.parse(fs.readFileSync('./test/samples/bad-image-url.json'));
   try {
     await instance.jsonToDataURL(json);
@@ -222,6 +234,8 @@ test('Should clear error with no parallel pages', async (t) => {
 
 test('Should throw error when several task in the process for non parallel', async (t) => {
   const instance = await createInstance({ key, useParallelPages: false });
+  t.teardown(() => instance.close());
+
   const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   try {
     await Promise.all([json, json].map((j) => instance.jsonToDataURL(j)));
@@ -234,6 +248,8 @@ test('Should throw error when several task in the process for non parallel', asy
 
 test('Should not throw error when several task in sequence for non parallel', async (t) => {
   const instance = await createInstance({ key, useParallelPages: false });
+  t.teardown(() => instance.close());
+
   const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   await instance.jsonToDataURL(json);
   await instance.jsonToDataURL(json);
@@ -243,6 +259,7 @@ test('Should not throw error when several task in sequence for non parallel', as
 
 test('buffer canvas rendering', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
   await matchImageSnapshot({
     jsonFileName: 'buffer-canvas.json',
     instance,
@@ -256,6 +273,7 @@ test('buffer canvas rendering', async (t) => {
 
 test('progress on pdf export', async (t) => {
   const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
 
   const json = { pages: [{ id: '1' }] };
 
