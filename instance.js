@@ -301,23 +301,9 @@ const closeAllInstances = async () => {
   await Promise.all(createdInstances.map((instance) => instance.close()));
 };
 
-// Register the function to be called on process exit
-process.on('beforeExit', () => {
-  closeAllInstances().catch((error) => {
-    console.error('Error closing instances:', error);
-  });
-});
-
 // Also handle other termination signals
-['SIGINT', 'SIGTERM', 'SIGQUIT', 'exit', 'beforeExit'].forEach((signal) => {
+['SIGINT', 'SIGTERM', 'SIGQUIT', 'exit', 'exit'].forEach((signal) => {
   process.on(signal, () => {
-    closeAllInstances()
-      .then(() => {
-        process.exit(0);
-      })
-      .catch((error) => {
-        console.error('Error closing instances:', error);
-        process.exit(1);
-      });
+    closeAllInstances();
   });
 });
