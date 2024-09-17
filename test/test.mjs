@@ -224,7 +224,7 @@ test('Should clear error with no parallel pages', async (t) => {
   try {
     await instance.jsonToDataURL(json);
   } catch (e) {
-    t.is(e.message, 'image 2YuCaDrZFa');
+    t.is(e.message.indexOf('image') > -1, true);
   }
   const json2 = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   await instance.jsonToDataURL(json2);

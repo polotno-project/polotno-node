@@ -192,7 +192,7 @@ module.exports.createInstance = async ({
         const skipImageError = isImageError && args[1]?.skipImageError;
 
         if (!skipError && !skipImageError) {
-          throw new Error(error);
+          throw new Error('Asset loading error: ' + error);
         }
       }
       // remove busy page
