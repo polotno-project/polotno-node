@@ -15,8 +15,8 @@ npm install polotno-node
 ```
 
 ```js
-const fs = require('fs');
-const { createInstance } = require('polotno-node');
+const fs = require("fs");
+const { createInstance } = require("polotno-node");
 
 async function run() {
   // create working instance
@@ -24,14 +24,14 @@ async function run() {
     // this is a demo key just for that project
     // (!) please don't use it in your projects
     // to create your own API key please go here: https://polotno.dev/cabinet
-    key: 'nFA5H9elEytDyPyvKL7T',
+    key: "nFA5H9elEytDyPyvKL7T",
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('polotno.json'));
+  const json = JSON.parse(fs.readFileSync("polotno.json"));
 
   const imageBase64 = await instance.jsonToImageBase64(json);
-  fs.writeFileSync('out.png', imageBase64, 'base64');
+  fs.writeFileSync("out.png", imageBase64, "base64");
 
   // close instance
   instance.close();
@@ -47,12 +47,12 @@ run();
 Create working instance of Polotno Node.
 
 ```js
-const { createInstance } = require('polotno-node');
+const { createInstance } = require("polotno-node");
 const instance = await createInstance({
   // this is a demo key just for that project
   // (!) please don't use it in your projects
   // to create your own API key please go here: https://polotno.dev/cabinet
-  key: 'nFA5H9elEytDyPyvKL7T',
+  key: "nFA5H9elEytDyPyvKL7T",
   // useParallelPages - use parallel pages to speed up rendering
   // you can use false only for sequential calls
   // it may break rendering if you call many parallel requests
@@ -61,7 +61,7 @@ const instance = await createInstance({
   // url - url of the Polotno Client Editor
   // client editor is just simple public html page that have `store` as global variable
   // by default it will run local build
-  url: 'https://yourappdomain.com/client',
+  url: "https://yourappdomain.com/client",
   // browser - puppeteer browser instance
   // by default it will use chrome-aws-lambda
   // useful to set your own rendering props or use browserless
@@ -74,7 +74,7 @@ const instance = await createInstance({
 Export json into data URL.
 
 ```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
+const json = JSON.parse(fs.readFileSync("polotno.json"));
 
 // by default it will export first page only
 const url = await instance.jsonToDataURL(json);
@@ -95,13 +95,13 @@ for (const page of json.pages) {
 Export json into base64 string of image.
 
 ```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
+const json = JSON.parse(fs.readFileSync("polotno.json"));
 
 // by default it will export first page only
 const imageBase64 = await instance.jsonToImageBase64(json, {
-  mimeType: 'image/png',
+  mimeType: "image/png",
 }); // also 'image/jpeg' is supported
-fs.writeFileSync('out.png', imageBase64, 'base64');
+fs.writeFileSync("out.png", imageBase64, "base64");
 
 // export many pages:
 for (const page of json.pages) {
@@ -118,11 +118,11 @@ for (const page of json.pages) {
 Export json into base64 string of pdf file.
 
 ```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
+const json = JSON.parse(fs.readFileSync("polotno.json"));
 
 // it will export all pages in the JSON
 const pdfBase64 = await instance.jsonToPDFBase64(json);
-fs.writeFileSync('out.pdf', pdfBase64, 'base64');
+fs.writeFileSync("out.pdf", pdfBase64, "base64");
 ```
 
 ### `instance.jsonToPDFDataURL(json, attrs)`
@@ -130,7 +130,7 @@ fs.writeFileSync('out.pdf', pdfBase64, 'base64');
 Export json into data url of pdf file.
 
 ```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
+const json = JSON.parse(fs.readFileSync("polotno.json"));
 
 const url = await instance.jsonToPDFDataURL(json);
 res.json({ url });
@@ -141,7 +141,7 @@ res.json({ url });
 Export json into data url of GIF file with animations
 
 ```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
+const json = JSON.parse(fs.readFileSync("polotno.json"));
 
 const url = await instance.jsonToGIFDataURL(json);
 res.json({ url });
@@ -152,10 +152,10 @@ res.json({ url });
 Export json into data url of GIF file with animations
 
 ```js
-const json = JSON.parse(fs.readFileSync('polotno.json'));
+const json = JSON.parse(fs.readFileSync("polotno.json"));
 
 const base64 = await instance.jsonToGIFBase64(json);
-fs.writeFileSync('out.gif', base64, 'base64');
+fs.writeFileSync("out.gif", base64, "base64");
 ```
 
 ### `attrs` usage
@@ -233,7 +233,7 @@ Control behavior of text on its overflow. Default is `change-font-size`. It mean
 
 ```js
 const url = await instance.jsonToPDFDataURL(json, {
-  textOverflow: 'resize',
+  textOverflow: "resize",
 });
 ```
 
@@ -249,8 +249,8 @@ Run any Polotno store API directly inside web-page context.
 const url = await instance.run(async (json) => {
   // you can use global "config" object that has some functions from "polotno/config" module
   window.config.addGlobalFont({
-    name: 'MyCustomFont',
-    url: 'https://example.com/font.otf',
+    name: "MyCustomFont",
+    url: "https://example.com/font.otf",
   });
 
   // you can use global "store" object
@@ -279,7 +279,7 @@ const url = await instance.run(async (json) => {
 
 ## Video export
 
-**This part is currently under development and API will change.**
+**Video export is deprecated on this package and not supported anymore.**
 
 You may need to have ffmpeg available in your system to make it work.
 Also you need to manually dependencies:
@@ -289,11 +289,11 @@ npm install fluent-ffmpeg axios
 ```
 
 ```js
-import { createInstance } from 'polotno-node';
-import { jsonToVideo } from 'polotno-node/video-parallel';
+import { createInstance } from "polotno-node";
+import { jsonToVideo } from "polotno-node/video-parallel";
 
 // load sample json
-const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
+const json = JSON.parse(fs.readFileSync("./test-data/video.json"));
 
 await jsonToVideo(
   // first argument is a function that returns an instance
@@ -301,11 +301,11 @@ await jsonToVideo(
   // or it can be a single instance (useful for cloud functions)
   () =>
     createInstance({
-      key: '...key...',
+      key: "...key...",
     }),
   json,
   {
-    out: 'out.mp4', // output file name
+    out: "out.mp4", // output file name
     parallel: 4, // number of parallel rendering processes
     fps: 15, // frames per second
     keepInstance: false, // keep instance open after rendering, make sure to use true if use just one instance
@@ -324,11 +324,11 @@ Pass `url` option to `createInstance` function with public url of your client ed
 **Note: you will have to maintain the last version of your client editor by yourself. Better to keep using the last **
 
 ```js
-const { createInstance } = require('polotno-node');
+const { createInstance } = require("polotno-node");
 
 const instance = await createInstance({
-  key: 'KEY',
-  url: 'https://yourappdomain.com/client',
+  key: "KEY",
+  url: "https://yourappdomain.com/client",
 });
 ```
 
@@ -353,15 +353,15 @@ You can speed up your function execution a lot, if instead of using full browser
 Using browserless.io you can also make your function much smaller in size, so it will be possible to deploy to cloud provider with smaller limits, like Vercel.
 
 ```js
-const { createInstance } = require('polotno-node/instance');
-const puppeteer = require('puppeteer');
+const { createInstance } = require("polotno-node/instance");
+const puppeteer = require("puppeteer");
 
 const instance = await createInstance({
-  key: 'nFA5H9elEytDyPyvKL7T',
+  key: "nFA5H9elEytDyPyvKL7T",
   browser: await puppeteer.connect({
-    browserWSEndpoint: 'wss://chrome.browserless.io?token=API_KEY',
+    browserWSEndpoint: "wss://chrome.browserless.io?token=API_KEY",
   }),
-  url: 'https://yourappdomain.com/client', // see "Your own client" section
+  url: "https://yourappdomain.com/client", // see "Your own client" section
 });
 ```
 
@@ -374,33 +374,33 @@ npm install @sparticuz/chromium-min
 ```
 
 ```js
-const { createInstance } = require('polotno-node/instance');
-const chromium = require('@sparticuz/chromium-min');
-const puppeteer = require('puppeteer-core');
+const { createInstance } = require("polotno-node/instance");
+const chromium = require("@sparticuz/chromium-min");
+const puppeteer = require("puppeteer-core");
 
 const makeInstance = async () => {
   const browser = await puppeteer.launch({
     args: [
       ...chromium.args,
-      '--no-sandbox',
-      '--hide-scrollbars',
-      '--disable-web-security',
-      '--allow-file-access-from-files',
+      "--no-sandbox",
+      "--hide-scrollbars",
+      "--disable-web-security",
+      "--allow-file-access-from-files",
       // more info about --disable-dev-shm-usage
       // https://github.com/puppeteer/puppeteer/issues/1175#issuecomment-369728215
       // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
-      '--disable-dev-shm-usage',
+      "--disable-dev-shm-usage",
     ],
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(
-      'https://github.com/Sparticuz/chromium/releases/download/v110.0.1/chromium-v110.0.1-pack.tar'
+      "https://github.com/Sparticuz/chromium/releases/download/v110.0.1/chromium-v110.0.1-pack.tar"
     ),
     headless: chromium.headless,
     ignoreHTTPSErrors: true,
   });
 
   return await createInstance({
-    key: 'your-key',
+    key: "your-key",
     browser,
   });
 };
