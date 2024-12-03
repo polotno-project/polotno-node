@@ -216,6 +216,21 @@ test('Bad font resize', async (t) => {
   await instance.close();
 });
 
+test('Allow split text', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'allow-split.json',
+    instance,
+    t,
+    attrs: {
+      textSplitAllowed: true,
+    },
+  });
+  await instance.close();
+});
+
 test('Should clear error with no parallel pages', async (t) => {
   const instance = await createInstance({ key, useParallelPages: false });
   t.teardown(() => instance.close());

@@ -4,7 +4,7 @@
   "description": "Polotno workflow from NodeJS",
   "main": "index.js",
   "scripts": {
-    "test": "ava --timeout=30s --concurrency=2 --serial",
+    "test": "ava --timeout=30s --concurrency=2",
     "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
     "dev": "vite ./client.html"
   },
@@ -19,14 +19,14 @@
   "devDependencies": {
     "ava": "^6.2.0",
     "axios": "^1.7.8",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.6",
     "fluent-ffmpeg": "^2.1.3",
     "pixelmatch": "^6.0.0",
     "pngjs": "^7.0.0",
-    "polotno": "^2.15.0",
+    "polotno": "^2.16.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^5.4.11"
+    "vite": "^6.0.2"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",

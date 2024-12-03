@@ -149,6 +149,17 @@ module.exports.createInstance = async ({
           }
         });
       }
+      if (args[1]?.textSplitAllowed) {
+        await page.evaluate(() => {
+          if (window.config && window.config.unstable_setTextSplitAllowed) {
+            window.config.unstable_setTextSplitAllowed(true);
+          } else {
+            console.error(
+              'unstable_setTextSplitAllowed function is not defined in the client.'
+            );
+          }
+        });
+      }
       if (args[1]?.onProgress) {
         const originalProgress = args[1].onProgress;
         await page.exposeFunction('onProgress', async (progress) => {

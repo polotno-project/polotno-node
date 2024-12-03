@@ -11,6 +11,7 @@ import { onLoadError } from 'polotno/utils/loader';
 import { setTextVerticalResizeEnabled as unstable_setTextVerticalResizeEnabled } from 'polotno/utils/flags';
 import { setAssetLoadTimeout, setFontLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
+import { setTextSplitAllowed as unstable_setTextSplitAllowed } from 'polotno/utils/flags';
 
 toggleFadeInAnimation(false);
 unstable_setTextOverflow('change-font-size');
@@ -30,6 +31,7 @@ window.config = {
   onLoadError,
   setAssetLoadTimeout,
   setFontLoadTimeout,
+  unstable_setTextSplitAllowed,
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
