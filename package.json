@@ -23,17 +23,17 @@
     "fluent-ffmpeg": "^2.1.3",
     "pixelmatch": "^6.0.0",
     "pngjs": "^7.0.0",
-    "polotno": "^2.16.5",
+    "polotno": "^2.18.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^6.0.7"
+    "vite": "^6.0.11"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",
   "dependencies": {
     "@sparticuz/chromium": "^131.0.1",
-    "puppeteer": "^24.0.0",
-    "puppeteer-core": "^24.0.0",
+    "puppeteer": "^24.1.1",
+    "puppeteer-core": "^24.1.1",
     "tmp": "^0.2.3"
   },
   "bugs": {
