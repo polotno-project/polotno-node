@@ -3,8 +3,15 @@ const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
 
 module.exports.createPage = async (browser, url) => {
   const page = await browser.newPage();
-  // overwrite user agent, so headless check still work with the last puppeteer version
-  await page.setUserAgent('Chrome Headless');
+
+  // we need to make sure that headless is inside user agent
+  // because we use it for key validation check
+  // but also lets NOT just overwrite default one, because Google Fonts may send "reduced" version of font
+  // so some languages may not work
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  if (userAgent.indexOf('Headless') === -1) {
+    await page.setUserAgent(userAgent + ' Chrome Headless');
+  }
 
   page.on('console', (msg) => {
     msg.args().forEach(async (message) => {
