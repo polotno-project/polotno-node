@@ -37,7 +37,10 @@ window.config = {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   React.createElement(WorkspaceCanvas, {
+    // making only offset is not enough, as it allows scroll and may produce some unexpected change of active page
     visiblePagesOffset: 0,
+    // render only active page will do a TRUE force render of active page
+    renderOnlyActivePage: true,
     store,
     components: { PageControls: () => null, Tooltip: () => null },
   })
