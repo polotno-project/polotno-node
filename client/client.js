@@ -13,6 +13,12 @@ import { setAssetLoadTimeout, setFontLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
 import { setTextSplitAllowed as unstable_setTextSplitAllowed } from 'polotno/utils/flags';
 
+import { jsPDF } from 'jspdf';
+
+// bundle jspdf into window object
+// so client will not need to load it from CDN
+window.jspdf = { jsPDF };
+
 toggleFadeInAnimation(false);
 unstable_setTextOverflow('change-font-size');
 
