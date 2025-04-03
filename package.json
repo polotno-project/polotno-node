@@ -3,6 +3,7 @@
   "version": "2.11.8",
   "description": "Polotno workflow from NodeJS",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "ava --timeout=30s --concurrency=2",
     "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
@@ -11,6 +12,7 @@
   "files": [
     "dist",
     "index.js",
+    "index.d.ts",
     "instance.js",
     "video-parallel.js",
     "README.md"
@@ -33,7 +35,6 @@
   "dependencies": {
     "@sparticuz/chromium": "^133.0.0",
     "puppeteer": "^24.4.0",
-    "puppeteer-core": "^24.4.0",
     "tmp": "^0.2.3"
   },
   "bugs": {
