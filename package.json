@@ -21,22 +21,22 @@
   "devDependencies": {
     "ava": "^6.2.0",
     "axios": "^1.8.4",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "fluent-ffmpeg": "^2.1.3",
     "jspdf": "^3.0.1",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
-    "polotno": "^2.21.8",
+    "polotno": "^2.21.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^6.2.5"
+    "vite": "^6.3.1"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",
   "dependencies": {
     "@sparticuz/chromium": "^133.0.0",
-    "puppeteer": "^24.5.0",
-    "puppeteer-core": "^24.5.0",
+    "puppeteer": "^24.6.1",
+    "puppeteer-core": "^24.6.1",
     "tmp": "^0.2.3"
   },
   "bugs": {
