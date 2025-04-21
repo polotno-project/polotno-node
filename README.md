@@ -66,6 +66,26 @@ const instance = await createInstance({
   // by default it will use chrome-aws-lambda
   // useful to set your own rendering props or use browserless
   browser: browser,
+
+  // requestInterceptor - optional function to intercept and modify network requests
+  // Useful when you need to:
+  // - Modify headers like User-Agent to access protected image resources
+  // - Add authentication tokens or credentials to requests
+  // - Log or monitor network traffic
+  requestInterceptor: (request) => {
+    const targetUrl = request.url();
+    if (/\.(png|jpe?g)(\?|$)/i.test(targetUrl)) {
+      console.log(`Modifying User-Agent for image request: ${targetUrl}`);
+      request.continue({
+        headers: {
+          ...request.headers(),
+          'User-Agent': 'MyCustomApprovedAgent/1.0',
+        },
+      });
+    } else {
+      request.continue();
+    }
+  },
 });
 ```
 
