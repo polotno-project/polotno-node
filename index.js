@@ -107,6 +107,7 @@ module.exports.createInstance = async ({
   useParallelPages,
   browserArgs = [],
   browser,
+  requestInterceptor,
 } = {}) => {
   return await createInstance({
     browser: browser || (await createBrowser({ browserArgs })),
@@ -114,5 +115,6 @@ module.exports.createInstance = async ({
     url,
     useParallelPages,
     browserArgs,
+    requestInterceptor,
   });
 };
