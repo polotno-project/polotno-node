@@ -1,8 +1,14 @@
 const path = require('path');
 const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
 
-module.exports.createPage = async (browser, url) => {
+module.exports.createPage = async (browser, url, requestInterceptor) => {
   const page = await browser.newPage();
+
+  // Attach request interceptor if provided
+  if (typeof requestInterceptor === 'function') {
+    await page.setRequestInterception(true);
+    page.on('request', requestInterceptor);
+  }
 
   // we need to make sure that headless is inside user agent
   // because we use it for key validation check
@@ -89,15 +95,16 @@ module.exports.createInstance = async ({
   url,
   useParallelPages = true,
   browser,
+  requestInterceptor,
 } = {}) => {
   const visitPage = url || `${DEFAULT_CLIENT}?key=${key}`;
   const firstPage = useParallelPages
     ? null
-    : await module.exports.createPage(browser, visitPage);
+    : await module.exports.createPage(browser, visitPage, requestInterceptor);
 
   const run = async (func, ...args) => {
     const page = useParallelPages
-      ? await module.exports.createPage(browser, visitPage)
+      ? await module.exports.createPage(browser, visitPage, requestInterceptor)
       : firstPage;
 
     if (busyPages.indexOf(page) >= 0) {
@@ -307,7 +314,7 @@ module.exports.createInstance = async ({
     jsonToBlob,
     jsonToGIFDataURL,
     jsonToGIFBase64,
-    createPage: async () => await module.exports.createPage(browser, visitPage),
+    createPage: async () => await module.exports.createPage(browser, visitPage, requestInterceptor),
   };
 
   createdInstances.push(instance);
