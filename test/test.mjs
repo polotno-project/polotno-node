@@ -301,3 +301,16 @@ test('progress on pdf export', async (t) => {
   await instance.close();
   t.assert(progressCalled);
 });
+
+// image in this test is no usual
+test('weird-image', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'weird-image.json',
+    instance,
+    t,
+  });
+  await instance.close();
+});
