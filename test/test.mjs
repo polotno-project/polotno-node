@@ -4,6 +4,7 @@ import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { createInstance } from '../index.js';
 import { config } from 'dotenv';
+import path from 'path';
 config();
 
 const key = process.env.POLOTNO_KEY;
