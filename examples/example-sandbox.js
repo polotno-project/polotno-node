@@ -6,7 +6,7 @@ config();
 
 async function run() {
   // create working instance
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     (async () => {
       console.log(`Running ${i}...`);
       const instance = await createInstance({
@@ -18,7 +18,7 @@ async function run() {
 
       const base64 = await instance.jsonToImageBase64(json, {
         htmlTextRenderEnabled: true,
-        pixelRatio: 0.2,
+        pixelRatio: 5,
       });
 
       fs.writeFileSync(`./outs/out-${i}.png`, base64, 'base64');
