@@ -25,11 +25,14 @@ module.exports.createPage = async (browser, url, requestInterceptor) => {
       if (message.toString().indexOf('margin') >= 0) {
         return;
       }
-      // const val = await arg.jsonValue();
-      // const { type, subtype, description } = arg._remoteObject;
-      // console.log(
-      //   `type: ${type}, subtype: ${subtype}, description:\n ${description}`
-      // );
+
+      const { subtype, description } = message.remoteObject();
+
+      if (subtype === 'error') {
+        console.error(description);
+        return;
+      }
+
       const text = message
         .toString()
         .replace('JSHandle:', '')
@@ -314,7 +317,8 @@ module.exports.createInstance = async ({
     jsonToBlob,
     jsonToGIFDataURL,
     jsonToGIFBase64,
-    createPage: async () => await module.exports.createPage(browser, visitPage, requestInterceptor),
+    createPage: async () =>
+      await module.exports.createPage(browser, visitPage, requestInterceptor),
   };
 
   createdInstances.push(instance);
