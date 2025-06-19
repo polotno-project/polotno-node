@@ -315,3 +315,14 @@ test('weird-image', async (t) => {
   });
   await instance.close();
 });
+
+test('render svg without defined size', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'svg-without-size.json',
+    instance,
+    t,
+  });
+});
