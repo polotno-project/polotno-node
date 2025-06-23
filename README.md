@@ -461,10 +461,12 @@ How to create a configuration layer with a dependency on `chronium` ?
 
 1. Create a `.zip` file from a chronium project. For example:
 
-```
+```shell
 mkdir chronium-112 && cd chronium-112
+
 npm init -y
 npm install @sparticuz/chromium@112.0
+
 zip -r chronium.zip ./*
 ```
 
@@ -477,19 +479,26 @@ zip -r chronium.zip ./*
 
 How to run the full example with aws-cli ?
 
-- Create a Lambda configuration layer, and upload a **.zip** archive which stores a **chronium** npm or git package.
+### 1. Create a Lambda configuration layer
 
-```
+Create a Lambda configuration layer, and upload a **.zip** archive which stores a **chronium** npm or git package.
+
+```shell
 export CH_VERSION=112.0
 export BUCKET=example-bucket
 export AWS_ACC_ID=000000000000
-// create a chronium project for Layer
+
+# create a chronium project for Layer
 mkdir chronium-layer
 cd chronium-layer
 npm init -y
 npm install @sparticuz/chromium@${CH_VERSION}
 zip -r chronium.zip ./*
+
+# upload a Layer to S3
 aws s3 cp chronium.zip s3://${BUCKET}/lambda-layers/chronium-${CH_VERSION}.zip
+
+# publish a Layer so it can be used in Lambda
 aws lambda publish-layer-version \
 --layer-name chronium-polotno \
 --content "S3Bucket=${BUCKET},S3Key=lambda-layers/chronium-{CH_VERSION}.zip" \
@@ -498,18 +507,25 @@ aws lambda publish-layer-version \
 --compatible-runtimes nodejs18.x
 ```
 
-- Create a JS file for a Lambda's handler
-
-```
-// create a folder
+### 2. Create a JS file for a Lambda's handler
+#### Init a node project
+```shell
+# create a folder
 mkdir handler && cd handler
-// init a node project
+
+# init a node project
 npm init -y
-// install dependencies
+
+# install dependencies
 npm install --save polotno-node puppeteer-core@19.8.0
-// create a file handler
+```
+
+#### Create a handler
+```shell
+# create a file handler
 touch index.mjs
-// add code example
+
+# add code example
 echo "
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
@@ -544,18 +560,64 @@ export const handler = () => {
   }
 };
 " >> index.mjs
-// create file with variables
+```
+
+<details>
+<summary>Highlighted code example from the command above:</summary>
+
+```js
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
+import { createInstance } from "polotno-node";
+export const handler = () => {
+  const browser = await puppeteer.launch({
+    args: [
+      ...chromium.args,
+      "--no-sandbox",
+      "--hide-scrollbars",
+      "--disable-web-security",
+      "--allow-file-access-from-files",
+      "--disable-dev-shm-usage",
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+    ignoreHTTPSErrors: true,
+  });
+  const polotnoInstance = await createInstance({
+    key: process.env.POLOTNO_API_KEY,
+    browser,
+  });
+  const body = polotnoInstance.jsonToImageBase64(event.json)
+
+  return {
+    StatusCode: 200,
+    headers: {
+      'Content-Type': 'image/png'
+    },
+    body,
+  }
+};
+```
+</details>
+
+#### Create file with variables
+```shell
 echo '{
     "Variables": {
       "POLOTNO_API_KEY": "your-api-key"
     }
   }
 ' >> vars.json
-// archive the folder
+
+# archive the folder
 zip -r index.zip ./*
-// copy to S3
+
+# copy to S3
 aws s3 cp index.zip s3://${BUCKET}/polotno-handler.zip
-// crete a trust policy
+```
+#### Crete a trust policy
+```shell
 echo '{
   "Version": "2012-10-17",
   "Statement": [
@@ -569,7 +631,11 @@ echo '{
   ]
 }
 ' >> trustPolicy.json
-// create roles and policies
+```
+
+#### Create roles and policies in AWS
+
+```shell
 aws iam create-role --role-name lambda-polotno-role --assume-role-policy-document file://trustPolicy.json
 aws iam attach-role-policy --role-name lambda-polotno-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 aws lambda create-function --function-name lambda-polotno \
@@ -585,6 +651,42 @@ aws lambda create-function --function-name lambda-polotno \
 aws lambda invoke --function-name lambda-polotno --cli-binary-format raw-in-base64-out --payload file://polotno-project-json.json image
 ```
 
+### AWS Lambda fonts issue
+
+If you have faced an issue `Timeout for loading font <font name>`, please proceed to the next solution.
+
+Lambda functions does not include any fonts by default, so we need to provide basic fonts (Arial and Times or their analogs) to make sure Polotno fonts functionality is working correctly.
+
+1. Create a `fonts` folder in the root of your handler project.
+```shell
+mkdir fonts
+```
+2. Put the `Arial.ttf` and `Times.ttf` files into the `fonts` folder. You can get them from your system fonts folder.
+3. Usage of fonts analogues is also possible:
+   1. If you don't want to use system Arial and Times fonts, you can use [Liberation Fonts](https://github.com/liberationfonts/liberation-fonts) as free alternative. Download fonts from repository. Put `LiberationMono-Regular.ttf` and `LiberationSans-Regular.ttf` inside `fonts` folder.
+   2. Create file `fonts.conf` inside `fonts` folder. It should contain the following lines:
+    ```xml 
+   <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+    <fontconfig>
+    <alias>
+      <family>Arial</family>
+      <prefer>
+        <family>Liberation Sans</family>
+      </prefer>
+    </alias>
+    <alias>
+      <family>Times New Roman</family>
+      <prefer>
+        <family>Liberation Serif</family>
+      </prefer>
+    </alias>
+    
+    <dir>/var/task/fonts</dir>
+    </fontconfig>
+   ```
+3. Upload your Lambda function as usual, fonts will be loaded automatically.
+
 ## Troubleshooting
 
 If you have an error like this
@@ -598,9 +700,12 @@ Unhandled Promise Rejection {"errorType":"Runtime.UnhandledPromiseRejection","er
 It may mean that Polotno Client Editor was not loaded in `puppeteer` instance. It is possible that you are missing required files in `node_modules` folder. I got this error when I was trying to run `polotno-node` on Vercel. To fix the issue you need to add this config into `vercel.json`:
 
 ```json
-"functions": {
-  "api/render.js": { // remember to replace this line with your function name
-    "includeFiles": "node_modules/polotno-node/\*\*"
-  },
+{
+  "functions": {
+    "api/render.js": {
+      // remember to replace this line with your function name
+      "includeFiles": "node_modules/polotno-node/\*\*"
+    }
+  }
 }
 ```
