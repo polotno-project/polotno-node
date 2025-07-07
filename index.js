@@ -84,7 +84,7 @@ const browserProps = {
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
   return puppeteer.launch({
     args: [
-      ...(isWindows ? [] : chrome.args),
+      ...(isWindows ? [] : chrome.args || []),
       ...minimal_args,
       '--disable-web-security',
       '--allow-file-access-from-files',

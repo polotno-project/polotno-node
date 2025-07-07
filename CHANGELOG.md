@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.17] - 2025-07-07
+
+- Update polotno to version `2.25.2`
+- Update internal dependencies
+
 ## [2.12.16] - 2025-06-19
 
 - Update polotno to version `2.24.0`.
