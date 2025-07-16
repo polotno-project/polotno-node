@@ -1,5 +1,5 @@
 let puppeteer = require('puppeteer-core');
-const chrome = require('@sparticuz/chromium');
+const chrome = require('@sparticuz/chromium').default;
 const os = require('os');
 const isMacOs = os.platform() === 'darwin';
 const isWindows = os.platform() === 'win32' || os.platform() === 'win64';
@@ -84,7 +84,7 @@ const browserProps = {
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
   return puppeteer.launch({
     args: [
-      ...(isWindows ? [] : chrome.args || []),
+      ...(isWindows ? [] : chrome.args),
       ...minimal_args,
       '--disable-web-security',
       '--allow-file-access-from-files',
