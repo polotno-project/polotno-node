@@ -1,5 +1,7 @@
 let puppeteer = require('puppeteer-core');
-const chrome = require('@sparticuz/chromium').default;
+const sparticuz = require('@sparticuz/chromium');
+// TODO: that is a weird hack, but it works
+const chrome = sparticuz.default || sparticuz;
 const os = require('os');
 const isMacOs = os.platform() === 'darwin';
 const isWindows = os.platform() === 'win32' || os.platform() === 'win64';

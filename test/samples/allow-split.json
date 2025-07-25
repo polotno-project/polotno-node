@@ -28,6 +28,7 @@
           "brightness": 0,
           "sepiaEnabled": false,
           "grayscaleEnabled": false,
+          "filters": {},
           "shadowEnabled": false,
           "shadowBlur": 5,
           "shadowOffsetX": 0,
@@ -45,6 +46,7 @@
           "fontStyle": "normal",
           "fontWeight": "normal",
           "textDecoration": "",
+          "textTransform": "none",
           "fill": "black",
           "align": "center",
           "verticalAlign": "top",
@@ -71,5 +73,6 @@
   "dpi": 72,
   "custom": {
     "wucIsRotated": false
-  }
+  },
+  "schemaVersion": 2
 }

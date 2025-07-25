@@ -20,23 +20,23 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "devDependencies": {
     "ava": "^6.4.1",
-    "axios": "^1.10.0",
-    "dotenv": "^17.2.0",
+    "axios": "^1.11.0",
+    "dotenv": "^17.2.1",
     "fluent-ffmpeg": "^2.1.3",
     "jspdf": "^3.0.1",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
-    "polotno": "2.25.4",
+    "polotno": "2.25.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^7.0.4"
+    "vite": "^7.0.6"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",
   "dependencies": {
-    "@sparticuz/chromium": "^138.0.1",
-    "puppeteer": "^24.13.0",
-    "puppeteer-core": "^24.13.0",
+    "@sparticuz/chromium": "^138.0.2",
+    "puppeteer": "^24.15.0",
+    "puppeteer-core": "^24.15.0",
     "tmp": "^0.2.3"
   },
   "bugs": {

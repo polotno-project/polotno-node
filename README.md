@@ -307,42 +307,6 @@ const url = await instance.run(async (json) => {
 }, json);
 ```
 
-## Video export
-
-**Video export is deprecated on this package and not supported anymore.**
-
-You may need to have ffmpeg available in your system to make it work.
-Also you need to manually dependencies:
-
-```bash
-npm install fluent-ffmpeg axios
-```
-
-```js
-import { createInstance } from 'polotno-node';
-import { jsonToVideo } from 'polotno-node/video-parallel';
-
-// load sample json
-const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
-
-await jsonToVideo(
-  // first argument is a function that returns an instance
-  // it can be a new instance on every call (useful for parallel rendering on local machine)
-  // or it can be a single instance (useful for cloud functions)
-  () =>
-    createInstance({
-      key: '...key...',
-    }),
-  json,
-  {
-    out: 'out.mp4', // output file name
-    parallel: 4, // number of parallel rendering processes
-    fps: 15, // frames per second
-    keepInstance: false, // keep instance open after rendering, make sure to use true if use just one instance
-  }
-);
-```
-
 ## Your own client
 
 By default `polotno-node` ships with the default Polotno Editor with its (hopefully) last version. If you use experimental API such as `unstable_registerShapeModel` and `unstable_registerShapeComponent`, the rendering may fail if you use unknown elements types.
@@ -364,8 +328,6 @@ const instance = await createInstance({
 
 ## Usage on the cloud
 
-`polotno-node` should work by default on AWS Lambda. But in some cloud providers you may need to do extra steps to reduce function size.
-
 ### AWS EC2
 
 EC2 has some troubles with loading fonts. To fix the issue install Google Chrome, it will load all required libraries.
@@ -383,6 +345,7 @@ You can speed up your function execution a lot, if instead of using full browser
 Using browserless.io you can also make your function much smaller in size, so it will be possible to deploy to cloud provider with smaller limits, like Vercel.
 
 ```js
+// (!) loading from polotno-node/instance will not import puppeteer and chromium-min dependencies
 const { createInstance } = require('polotno-node/instance');
 const puppeteer = require('puppeteer');
 
@@ -508,7 +471,9 @@ aws lambda publish-layer-version \
 ```
 
 ### 2. Create a JS file for a Lambda's handler
+
 #### Init a node project
+
 ```shell
 # create a folder
 mkdir handler && cd handler
@@ -521,6 +486,7 @@ npm install --save polotno-node puppeteer-core@19.8.0
 ```
 
 #### Create a handler
+
 ```shell
 # create a file handler
 touch index.mjs
@@ -599,9 +565,11 @@ export const handler = () => {
   }
 };
 ```
+
 </details>
 
 #### Create file with variables
+
 ```shell
 echo '{
     "Variables": {
@@ -616,7 +584,9 @@ zip -r index.zip ./*
 # copy to S3
 aws s3 cp index.zip s3://${BUCKET}/polotno-handler.zip
 ```
+
 #### Crete a trust policy
+
 ```shell
 echo '{
   "Version": "2012-10-17",
@@ -658,34 +628,36 @@ If you have faced an issue `Timeout for loading font <font name>`, please procee
 Lambda functions does not include any fonts by default, so we need to provide basic fonts (Arial and Times or their analogs) to make sure Polotno fonts functionality is working correctly.
 
 1. Create a `fonts` folder in the root of your handler project.
+
 ```shell
 mkdir fonts
 ```
+
 2. Put the `Arial.ttf` and `Times.ttf` files into the `fonts` folder. You can get them from your system fonts folder.
 3. Usage of fonts analogues is also possible:
    1. If you don't want to use system Arial and Times fonts, you can use [Liberation Fonts](https://github.com/liberationfonts/liberation-fonts) as free alternative. Download fonts from repository. Put `LiberationMono-Regular.ttf` and `LiberationSans-Regular.ttf` inside `fonts` folder.
    2. Create file `fonts.conf` inside `fonts` folder. It should contain the following lines:
-    ```xml 
+   ```xml
    <?xml version="1.0"?>
-    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-    <fontconfig>
-    <alias>
-      <family>Arial</family>
-      <prefer>
-        <family>Liberation Sans</family>
-      </prefer>
-    </alias>
-    <alias>
-      <family>Times New Roman</family>
-      <prefer>
-        <family>Liberation Serif</family>
-      </prefer>
-    </alias>
-    
-    <dir>/var/task/fonts</dir>
-    </fontconfig>
+   <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+   <fontconfig>
+   <alias>
+     <family>Arial</family>
+     <prefer>
+       <family>Liberation Sans</family>
+     </prefer>
+   </alias>
+   <alias>
+     <family>Times New Roman</family>
+     <prefer>
+       <family>Liberation Serif</family>
+     </prefer>
+   </alias>
+
+   <dir>/var/task/fonts</dir>
+   </fontconfig>
    ```
-3. Upload your Lambda function as usual, fonts will be loaded automatically.
+4. Upload your Lambda function as usual, fonts will be loaded automatically.
 
 ## Troubleshooting
 
@@ -704,7 +676,7 @@ It may mean that Polotno Client Editor was not loaded in `puppeteer` instance. I
   "functions": {
     "api/render.js": {
       // remember to replace this line with your function name
-      "includeFiles": "node_modules/polotno-node/\*\*"
+      "includeFiles": "node_modules/polotno-node/**"
     }
   }
 }
