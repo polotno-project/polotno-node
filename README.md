@@ -196,12 +196,12 @@ You can add `assetLoadTimeout` attribute to `attrs` object. It will be used to s
 const url = await instance.jsonToPDFDataURL(json, { assetLoadTimeout: 60000 });
 ```
 
-### `attrs.assetFontTimeout`
+### `attrs.fontLoadTimeout`
 
 Timeout for loading fonts. By default it is 6000ms.
 
 ```js
-const url = await instance.jsonToPDFDataURL(json, { assetFontTimeout: 10000 });
+const url = await instance.jsonToPDFDataURL(json, { fontLoadTimeout: 10000 });
 ```
 
 ### `attrs.htmlTextRenderEnabled`
@@ -635,8 +635,10 @@ mkdir fonts
 
 2. Put the `Arial.ttf` and `Times.ttf` files into the `fonts` folder. You can get them from your system fonts folder.
 3. Usage of fonts analogues is also possible:
+
    1. If you don't want to use system Arial and Times fonts, you can use [Liberation Fonts](https://github.com/liberationfonts/liberation-fonts) as free alternative. Download fonts from repository. Put `LiberationMono-Regular.ttf` and `LiberationSans-Regular.ttf` inside `fonts` folder.
    2. Create file `fonts.conf` inside `fonts` folder. It should contain the following lines:
+
    ```xml
    <?xml version="1.0"?>
    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
@@ -657,6 +659,7 @@ mkdir fonts
    <dir>/var/task/fonts</dir>
    </fontconfig>
    ```
+
 4. Upload your Lambda function as usual, fonts will be loaded automatically.
 
 ## Troubleshooting
