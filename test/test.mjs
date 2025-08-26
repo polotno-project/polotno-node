@@ -4,8 +4,7 @@ import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { createInstance } from '../index.js';
 import { config } from 'dotenv';
-import path from 'path';
-config();
+config({ quiet: true });
 
 const key = process.env.POLOTNO_KEY;
 
@@ -83,7 +82,6 @@ test('sample export', async (t) => {
     instance,
     t,
   });
-  await instance.close();
 });
 
 test('rich text support', async (t) => {
@@ -101,7 +99,6 @@ test('rich text support', async (t) => {
     //
     tolerance: 8000,
   });
-  await instance.close();
 });
 
 test('vertical text align', async (t) => {
@@ -116,7 +113,6 @@ test('vertical text align', async (t) => {
       textVerticalResizeEnabled: true,
     },
   });
-  await instance.close();
 });
 
 test('optionally disable text fit', async (t) => {
@@ -131,7 +127,6 @@ test('optionally disable text fit', async (t) => {
       textOverflow: 'resize',
     },
   });
-  await instance.close();
 });
 
 test('vertical html text with align', async (t) => {
@@ -148,7 +143,6 @@ test('vertical html text with align', async (t) => {
       pixelRatio: 0.3,
     },
   });
-  await instance.close();
 });
 
 test('fail on timeout', async (t) => {
@@ -161,7 +155,6 @@ test('fail on timeout', async (t) => {
       assetLoadTimeout: 1,
     });
   });
-  await instance.close();
 });
 
 test('fail on font timeout', async (t) => {
@@ -177,7 +170,6 @@ test('fail on font timeout', async (t) => {
       fontLoadTimeout: 1,
     });
   });
-  await instance.close();
 });
 
 test('Undefined fonts should fallback and we can skip it', async (t) => {
@@ -192,7 +184,6 @@ test('Undefined fonts should fallback and we can skip it', async (t) => {
       skipFontError: true,
     },
   });
-  await instance.close();
 });
 
 test('skip error on image loading', async (t) => {
@@ -207,7 +198,6 @@ test('skip error on image loading', async (t) => {
       skipImageError: true,
     },
   });
-  await instance.close();
 });
 
 // when a text has bad font (we can't load it)
@@ -224,22 +214,25 @@ test('Bad font resize', async (t) => {
       skipFontError: true,
     },
   });
-  await instance.close();
 });
 
 test('Allow split text', async (t) => {
-  const instance = await createInstance({ key });
-  t.teardown(() => instance.close());
+  const instances = [];
+  t.teardown(() => Promise.all(instances.map((i) => i.close())));
 
-  await matchImageSnapshot({
-    jsonFileName: 'allow-split.json',
-    instance,
-    t,
-    attrs: {
-      textSplitAllowed: true,
-    },
-  });
-  await instance.close();
+  // run several iterations, because we had very rare cases when text was not split correctly
+  for (let i = 0; i < 5; i++) {
+    const instance = await createInstance({ key });
+    instances.push(instance);
+    await matchImageSnapshot({
+      jsonFileName: 'allow-split.json',
+      instance,
+      t,
+      attrs: {
+        textSplitAllowed: true,
+      },
+    });
+  }
 });
 
 test('Should clear error with no parallel pages', async (t) => {
@@ -255,7 +248,6 @@ test('Should clear error with no parallel pages', async (t) => {
   const json2 = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
   await instance.jsonToDataURL(json2);
   t.assert(true);
-  await instance.close();
 });
 
 test('Should throw error when several task in the process for non parallel', async (t) => {
@@ -269,7 +261,6 @@ test('Should throw error when several task in the process for non parallel', asy
   } catch (e) {
     t.assert(true, 'error triggered');
   }
-  await instance.close();
 });
 
 test('Should not throw error when several task in sequence for non parallel', async (t) => {
@@ -280,7 +271,6 @@ test('Should not throw error when several task in sequence for non parallel', as
   await instance.jsonToDataURL(json);
   await instance.jsonToDataURL(json);
   t.assert(true);
-  await instance.close();
 });
 
 test('buffer canvas rendering', async (t) => {
@@ -294,7 +284,6 @@ test('buffer canvas rendering', async (t) => {
       skipFontError: true,
     },
   });
-  await instance.close();
 });
 
 test('progress on pdf export', async (t) => {
@@ -309,7 +298,6 @@ test('progress on pdf export', async (t) => {
       progressCalled = true;
     },
   });
-  await instance.close();
   t.assert(progressCalled);
 });
 
@@ -323,7 +311,6 @@ test('weird-image', async (t) => {
     instance,
     t,
   });
-  await instance.close();
 });
 
 test('render svg without defined size', async (t) => {
