@@ -324,6 +324,20 @@ test('render svg without defined size', async (t) => {
   });
 });
 
+test('render paragraphs with rich text', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'paragraphs.json',
+    instance,
+    attrs: {
+      htmlTextRenderEnabled: true,
+    },
+    t,
+  });
+});
+
 // this test is tricky, I found a case when text on the second page was not rendered correctly
 // because of complex order of page loading, font loading, etc.
 // the task of the test is to render first page with font A, then second page with font A and B
