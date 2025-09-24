@@ -313,6 +313,18 @@ test('weird-image', async (t) => {
   });
 });
 
+// font family name has characters that must be escaped
+test('weird-font-family', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'weird-font-family.json',
+    instance,
+    t,
+  });
+});
+
 test('render svg without defined size', async (t) => {
   const instance = await createInstance({ key });
   t.teardown(() => instance.close());
