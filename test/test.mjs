@@ -386,3 +386,17 @@ test('render several pages with different fonts', async (t) => {
   await instance.close();
   t.is(numDiffPixels, 0);
 });
+
+test('should properly render font', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'wrong-font.json',
+    instance,
+    attrs: {
+      pageId: '56882bcf-8cbf-44c8-9c0f-29867e47f9b3'
+    },
+    t,
+  });
+});
