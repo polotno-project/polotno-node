@@ -139,7 +139,7 @@ module.exports.createInstance = async ({
               'setFontLoadTimeout function is not defined in the client.'
             );
           }
-        }, args[1].assetLoadTimeout);
+        }, args[1].fontLoadTimeout);
       }
       if (args[1]?.htmlTextRenderEnabled) {
         await page.evaluate(() => {

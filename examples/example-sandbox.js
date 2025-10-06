@@ -13,9 +13,29 @@ async function run() {
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
 
+  // duplicate pages multiple times
+  const originalPages = json.pages;
+  const numCopies = 20; // adjust number of copies as needed
+
+  json.pages = [];
+  for (let i = 0; i < numCopies; i++) {
+    // clone pages and update IDs
+    const duplicatedPages = originalPages.map((page) => ({
+      ...page,
+      id: `${page.id}-copy-${i}`,
+    }));
+    json.pages.push(...duplicatedPages);
+  }
+
+  fs.writeFileSync('out-large.json', JSON.stringify(json, null, 2));
+
+  console.log('here');
+
   const base64 = await instance.jsonToPDFBase64(json, {
-    htmlTextRenderEnabled: true,
-    pageIds: ['FbU0890OUgesndg8rBCZ4', 'NOlea6ivHc79Z-eZJZfUP'],
+    onProgress: (progress) => {
+      console.log('progress', progress);
+    },
+    // htmlTextRenderEnabled: true,
   });
 
   fs.writeFileSync('out.pdf', base64, 'base64');
