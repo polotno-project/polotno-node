@@ -313,6 +313,18 @@ test('weird-image', async (t) => {
   });
 });
 
+// image in this test is no usual
+test('upper-case-resize', async (t) => {
+  const instance = await createInstance({ key });
+  t.teardown(() => instance.close());
+
+  await matchImageSnapshot({
+    jsonFileName: 'upper-case-resize.json',
+    instance,
+    t,
+  });
+});
+
 // font family name has characters that must be escaped
 test('weird-font-family', async (t) => {
   const instance = await createInstance({ key });

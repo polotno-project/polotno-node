@@ -71,8 +71,5 @@
   "audios": [],
   "unit": "px",
   "dpi": 72,
-  "custom": {
-    "wucIsRotated": false
-  },
   "schemaVersion": 2
 }

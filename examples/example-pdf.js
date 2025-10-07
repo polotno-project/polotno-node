@@ -14,9 +14,10 @@ async function run() {
   const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
 
   const base64 = await instance.jsonToPDFBase64(json, {
-    // pixelRatio: 10,
+    pixelRatio: 3,
+    quality: 0.8,
     // textSplitAllowed: true,
-    htmlTextRenderEnabled: true,
+    // htmlTextRenderEnabled: true,
     // textVerticalResizeEnabled: true,
   });
 
