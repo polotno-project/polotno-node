@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.12.30] - 2025-10-20
 
 - Added `args` export, optimize args passed into the browser
+- Remove `--disable-font-subpixel-positioning` from default args
 
 ## [2.12.29] - 2025-10-14
 
