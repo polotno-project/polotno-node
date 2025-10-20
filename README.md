@@ -328,6 +328,166 @@ const instance = await createInstance({
 
 ## Usage on the cloud
 
+### AWS Lambda
+
+`polotno-node` works with AWS Lambda out of the box. Here's a simple example:
+
+```js
+const { createInstance } = require('polotno-node');
+
+export const handler = async (event) => {
+  const instance = await createInstance({
+    key: process.env.POLOTNO_API_KEY,
+  });
+
+  const base64 = await instance.jsonToImageBase64(event.json);
+
+  await instance.close();
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'image/png',
+    },
+    body: base64,
+  };
+};
+```
+
+**Important:** For reliable performance, you may need to increase AWS Lambda limits:
+
+- **Memory**: Increase from the default. For complex designs, you may need to set it to maximum.
+- **Timeout**: Increase from the default. For large files, you may need to set it to maximum.
+- **Ephemeral Storage**: May need to increase from the default for complex designs.
+
+Without these increases, polotno-node may work on smaller files but will fail or timeout on larger files.
+
+**Full working example:** See [polotno-node-aws-lambda](https://github.com/polotno-project/polotno-node-aws-lambda) for a complete demo.
+
+#### AWS Lambda with Layers (Optional)
+
+For advanced usage, you can use [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html) to manage dependencies like chromium separately. This can help with deployment size and organization.
+
+**Dependencies:**
+
+- @sparticuz/chromium
+- puppeteer-core
+- polotno-node
+
+**Requirements:**
+
+- The chromium and puppeteer versions need to be compatible. Please check this [document](https://pptr.dev/supported-browsers).
+- The **Memory limit** needs to be increased from the default. You may need to set it to maximum for complex designs.
+- The **timeout** should be increased from the default. You may need to set it to maximum for large files.
+
+**Creating a Lambda Layer with chromium:**
+
+1. Create a `.zip` file from a chromium project:
+
+```shell
+mkdir chromium-112 && cd chromium-112
+
+npm init -y
+npm install @sparticuz/chromium@112.0
+
+zip -r chromium.zip ./*
+```
+
+2. Go to AWS console then open Lambda section and click on `Layers`.
+3. Following the [documentation](https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html) create a Layer with a chromium dependency by uploading a zip file. Keep in mind that environment like `nodejs18.x` should match between layer and function.
+
+> The size of the zip will be large, so you may need to use S3 to upload it.
+
+4. Finally, open the Lambda function, select a `Code` section, at the bottom click on `Add Layer` and select a created layer.
+
+**Handler code with custom chromium:**
+
+Create `index.mjs`:
+
+```js
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
+import { createInstance } from 'polotno-node';
+
+export const handler = async (event) => {
+  const browser = await puppeteer.launch({
+    args: [
+      ...chromium.args,
+      '--no-sandbox',
+      '--hide-scrollbars',
+      '--disable-web-security',
+      '--allow-file-access-from-files',
+      '--disable-dev-shm-usage',
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+    ignoreHTTPSErrors: true,
+  });
+
+  const polotnoInstance = await createInstance({
+    key: process.env.POLOTNO_API_KEY,
+    browser,
+  });
+
+  const body = await polotnoInstance.jsonToImageBase64(event.json);
+
+  await polotnoInstance.close();
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'image/png',
+    },
+    body,
+  };
+};
+```
+
+#### AWS Lambda fonts issue
+
+Lambda functions do not include any fonts by default. If you encounter `Timeout for loading font <font name>` errors, you need to provide basic fonts (Arial and Times or their analogs).
+
+<details>
+<summary>Solution: Add fonts to your Lambda function</summary>
+
+1. Create a `fonts` folder in the root of your handler project.
+
+```shell
+mkdir fonts
+```
+
+2. Put the `Arial.ttf` and `Times.ttf` files into the `fonts` folder. You can get them from your system fonts folder.
+3. Usage of fonts analogues is also possible:
+
+   1. If you don't want to use system Arial and Times fonts, you can use [Liberation Fonts](https://github.com/liberationfonts/liberation-fonts) as free alternative. Download fonts from repository. Put `LiberationMono-Regular.ttf` and `LiberationSans-Regular.ttf` inside `fonts` folder.
+   2. Create file `fonts.conf` inside `fonts` folder. It should contain the following lines:
+
+   ```xml
+   <?xml version="1.0"?>
+   <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+   <fontconfig>
+   <alias>
+     <family>Arial</family>
+     <prefer>
+       <family>Liberation Sans</family>
+     </prefer>
+   </alias>
+   <alias>
+     <family>Times New Roman</family>
+     <prefer>
+       <family>Liberation Serif</family>
+     </prefer>
+   </alias>
+
+   <dir>/var/task/fonts</dir>
+   </fontconfig>
+   ```
+
+4. Upload your Lambda function as usual, fonts will be loaded automatically.
+
+</details>
+
 ### AWS EC2
 
 EC2 has some troubles with loading fonts. To fix the issue install Google Chrome, it will load all required libraries.
@@ -379,9 +539,6 @@ const makeInstance = async () => {
       '--hide-scrollbars',
       '--disable-web-security',
       '--allow-file-access-from-files',
-      // more info about --disable-dev-shm-usage
-      // https://github.com/puppeteer/puppeteer/issues/1175#issuecomment-369728215
-      // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
       '--disable-dev-shm-usage',
     ],
     defaultViewport: chromium.defaultViewport,
@@ -400,267 +557,6 @@ const makeInstance = async () => {
 
 const instance = await makeInstance();
 ```
-
-## AWS lambda with Layer configuration
-
-In order to run the **polotno-node** in AWS Lambda, it's recommended to use a [Lambda Layer configurations](https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html) which will manage the dependencies, like **chronium**.
-In addition, the Lambda's configuration needs to be changed as well. It's recommeded to change the **timeout** to 30 seconds instead of default value (3 seconds) and **Memory limit** increase to minimum 512 Mb instead of 128 mb ( default value ).
-
-Dependencies:
-
-- @sparticuz/chromium
-- puppeteer-core
-- polotno-node
-
-Pre-requirements:
-
-- The chronium and puppeteer versions need to be satisfied. Please check this [document](https://pptr.dev/supported-browsers).
-- The **minumum Memory limit** needs to be `512 Mb` for AWS Lambda. Default is `128 Mb`.
-- The **timeout** should be increased from default 3 seconds to higher value, for example up to 30 seconds. It depends on the Memory limit. For instance, if the memory limit was set to 1024, the polotno process might take ~15 secs, if 512 mb, ~30sec.
-
-==========================================
-
-How to create a configuration layer with a dependency on `chronium` ?
-
-1. Create a `.zip` file from a chronium project. For example:
-
-```shell
-mkdir chronium-112 && cd chronium-112
-
-npm init -y
-npm install @sparticuz/chromium@112.0
-
-zip -r chronium.zip ./*
-```
-
-2. Go to AWS console then open a Lambda section and click on `Layers`.
-3. Following the [documentation](https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html) create a Layer with a chrnioum dependency by uploading a zip file. Keep in mind that environment like `nodejs18.x` should match between layer and function.
-
-> Approximatelly, the size of the zip, will be around `73 Mb`, so in order to upload, the S3 service will be needed. 4. Finally, open the Lambda function, select a `Code` section, at the bottom click on `Add Layer` and select a created layer.
-
-==========================================
-
-How to run the full example with aws-cli ?
-
-### 1. Create a Lambda configuration layer
-
-Create a Lambda configuration layer, and upload a **.zip** archive which stores a **chronium** npm or git package.
-
-```shell
-export CH_VERSION=112.0
-export BUCKET=example-bucket
-export AWS_ACC_ID=000000000000
-
-# create a chronium project for Layer
-mkdir chronium-layer
-cd chronium-layer
-npm init -y
-npm install @sparticuz/chromium@${CH_VERSION}
-zip -r chronium.zip ./*
-
-# upload a Layer to S3
-aws s3 cp chronium.zip s3://${BUCKET}/lambda-layers/chronium-${CH_VERSION}.zip
-
-# publish a Layer so it can be used in Lambda
-aws lambda publish-layer-version \
---layer-name chronium-polotno \
---content "S3Bucket=${BUCKET},S3Key=lambda-layers/chronium-{CH_VERSION}.zip" \
---description Chronium-dev-${CH_VERSION} \
---compatible-architectures x86_64 \
---compatible-runtimes nodejs18.x
-```
-
-### 2. Create a JS file for a Lambda's handler
-
-#### Init a node project
-
-```shell
-# create a folder
-mkdir handler && cd handler
-
-# init a node project
-npm init -y
-
-# install dependencies
-npm install --save polotno-node puppeteer-core@19.8.0
-```
-
-#### Create a handler
-
-```shell
-# create a file handler
-touch index.mjs
-
-# add code example
-echo "
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
-import { createInstance } from "polotno-node";
-export const handler = () => {
-  const browser = await puppeteer.launch({
-    args: [
-      ...chromium.args,
-      "--no-sandbox",
-      "--hide-scrollbars",
-      "--disable-web-security",
-      "--allow-file-access-from-files",
-      "--disable-dev-shm-usage",
-    ],
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
-    headless: true,
-    ignoreHTTPSErrors: true,
-  });
-  const polotnoInstance = await createInstance({
-    key: process.env.POLOTNO_API_KEY,
-    browser,
-  });
-  const body = polotnoInstance.jsonToImageBase64(event.json)
-
-  return {
-    StatusCode: 200,
-    headers: {
-      'Content-Type': 'image/png'
-    },
-    body,
-  }
-};
-" >> index.mjs
-```
-
-<details>
-<summary>Highlighted code example from the command above:</summary>
-
-```js
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
-import { createInstance } from "polotno-node";
-export const handler = () => {
-  const browser = await puppeteer.launch({
-    args: [
-      ...chromium.args,
-      "--no-sandbox",
-      "--hide-scrollbars",
-      "--disable-web-security",
-      "--allow-file-access-from-files",
-      "--disable-dev-shm-usage",
-    ],
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
-    headless: true,
-    ignoreHTTPSErrors: true,
-  });
-  const polotnoInstance = await createInstance({
-    key: process.env.POLOTNO_API_KEY,
-    browser,
-  });
-  const body = polotnoInstance.jsonToImageBase64(event.json)
-
-  return {
-    StatusCode: 200,
-    headers: {
-      'Content-Type': 'image/png'
-    },
-    body,
-  }
-};
-```
-
-</details>
-
-#### Create file with variables
-
-```shell
-echo '{
-    "Variables": {
-      "POLOTNO_API_KEY": "your-api-key"
-    }
-  }
-' >> vars.json
-
-# archive the folder
-zip -r index.zip ./*
-
-# copy to S3
-aws s3 cp index.zip s3://${BUCKET}/polotno-handler.zip
-```
-
-#### Crete a trust policy
-
-```shell
-echo '{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-' >> trustPolicy.json
-```
-
-#### Create roles and policies in AWS
-
-```shell
-aws iam create-role --role-name lambda-polotno-role --assume-role-policy-document file://trustPolicy.json
-aws iam attach-role-policy --role-name lambda-polotno-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-aws lambda create-function --function-name lambda-polotno \
---runtime nodejs18.x \
---zip-file fileb://index.zip \
---layers "arn:aws:lambda:eu-central-1:${AWS_ACC_ID}:layer:chronium-polotno:1" \
---handler index.handler \
---environment file://vars.json \
---role "arn:aws:iam::${AWS_ACC_ID}:role/lambda-polotno-role" \
---timeout 60 \
---memory-size 512
-// try it
-aws lambda invoke --function-name lambda-polotno --cli-binary-format raw-in-base64-out --payload file://polotno-project-json.json image
-```
-
-### AWS Lambda fonts issue
-
-If you have faced an issue `Timeout for loading font <font name>`, please proceed to the next solution.
-
-Lambda functions does not include any fonts by default, so we need to provide basic fonts (Arial and Times or their analogs) to make sure Polotno fonts functionality is working correctly.
-
-1. Create a `fonts` folder in the root of your handler project.
-
-```shell
-mkdir fonts
-```
-
-2. Put the `Arial.ttf` and `Times.ttf` files into the `fonts` folder. You can get them from your system fonts folder.
-3. Usage of fonts analogues is also possible:
-
-   1. If you don't want to use system Arial and Times fonts, you can use [Liberation Fonts](https://github.com/liberationfonts/liberation-fonts) as free alternative. Download fonts from repository. Put `LiberationMono-Regular.ttf` and `LiberationSans-Regular.ttf` inside `fonts` folder.
-   2. Create file `fonts.conf` inside `fonts` folder. It should contain the following lines:
-
-   ```xml
-   <?xml version="1.0"?>
-   <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-   <fontconfig>
-   <alias>
-     <family>Arial</family>
-     <prefer>
-       <family>Liberation Sans</family>
-     </prefer>
-   </alias>
-   <alias>
-     <family>Times New Roman</family>
-     <prefer>
-       <family>Liberation Serif</family>
-     </prefer>
-   </alias>
-
-   <dir>/var/task/fonts</dir>
-   </fontconfig>
-   ```
-
-4. Upload your Lambda function as usual, fonts will be loaded automatically.
 
 ## Troubleshooting
 
