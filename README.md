@@ -347,19 +347,25 @@ console.log(args);
 // ['--disable-web-security', '--allow-file-access-from-files', '--disable-gpu', ...]
 ```
 
+**Platform compatibility:** Using `@sparticuz/chromium` args works best on **Linux** and **macOS**. On **Windows**, these args may not work as expected, so the library automatically skips them on Windows. When manually combining args, be aware of platform differences.
+
 ### Using with custom browser
 
-When you want to use your own browser instance (e.g., with browserless.io or custom puppeteer configuration), you can still use these default arguments:
+When you want to use your own browser instance (e.g., with browserless.io or custom puppeteer configuration), you should combine `chrome.args` (the base defaults) with polotno-node's `args` (additional optimizations):
 
 ```js
 const { createInstance, args } = require('polotno-node');
+const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
-// Use polotno-node's default args with your custom browser
+// Combine chrome.args (base defaults) with polotno-node's args (optimizations)
+// This works best on Linux/macOS
 const browser = await puppeteer.launch({
-  args: args,
+  args: [...chromium.args, ...args],
+  defaultViewport: chromium.defaultViewport,
+  executablePath: await chromium.executablePath(),
   headless: true,
-  // ... other browser options
+  ignoreHTTPSErrors: true,
 });
 
 const instance = await createInstance({
@@ -368,37 +374,48 @@ const instance = await createInstance({
 });
 ```
 
+**Note:** `polotno-node`'s `args` are designed to work on top of `@sparticuz/chromium`'s args for optimal server-side rendering on Linux/macOS environments.
+
 ### Modifying default arguments
 
-If you need to add or remove specific arguments, you can do so by spreading the array:
+If you need to add, remove, or replace specific arguments (Linux/macOS):
 
 ```js
 const { createInstance, args } = require('polotno-node');
+const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
-// Add custom arguments
+// Add custom arguments on top of chrome.args and polotno args
 const browser = await puppeteer.launch({
-  args: [...args, '--custom-arg', '--another-custom-arg'],
+  args: [...chromium.args, ...args, '--custom-arg', '--another-custom-arg'],
+  defaultViewport: chromium.defaultViewport,
+  executablePath: await chromium.executablePath(),
 });
 
-// Remove specific arguments
+// Remove specific arguments from polotno args
 const filteredArgs = args.filter((arg) => arg !== '--disable-gpu');
 const browser2 = await puppeteer.launch({
-  args: filteredArgs,
+  args: [...chromium.args, ...filteredArgs],
+  defaultViewport: chromium.defaultViewport,
+  executablePath: await chromium.executablePath(),
 });
 
-// Replace specific arguments
+// Replace specific arguments in polotno args
 const customArgs = args.map((arg) =>
   arg === '--disable-web-security' ? '--enable-web-security' : arg
 );
 const browser3 = await puppeteer.launch({
-  args: customArgs,
+  args: [...chromium.args, ...customArgs],
+  defaultViewport: chromium.defaultViewport,
+  executablePath: await chromium.executablePath(),
 });
 ```
 
+**Note:** These examples assume Linux/macOS environment where `chromium.args` work properly.
+
 ### Combining with `browserArgs` option
 
-When using `createInstance()` or `createBrowser()`, you can provide additional arguments via `browserArgs` option. These will be appended to the default arguments:
+When using `createInstance()` or `createBrowser()`, you can provide additional arguments via `browserArgs` option. Internally, this automatically combines `chrome.args` + `args` + your custom `browserArgs`:
 
 ```js
 const { createInstance } = require('polotno-node');
@@ -407,6 +424,7 @@ const instance = await createInstance({
   key: 'your-key',
   browserArgs: ['--custom-arg', '--another-arg'],
 });
+// Internally merges: chrome.args + polotno args + browserArgs
 ```
 
 ## Your own client
@@ -514,6 +532,7 @@ import { createInstance, args } from 'polotno-node';
 export const handler = async (event) => {
   const browser = await puppeteer.launch({
     // Combine chromium args with polotno-node's optimized args
+    // Works well on AWS Lambda (Linux environment)
     args: [...chromium.args, ...args],
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(),
@@ -632,6 +651,7 @@ const puppeteer = require('puppeteer-core');
 const makeInstance = async () => {
   const browser = await puppeteer.launch({
     // Combine chromium args with polotno-node's optimized args
+    // Best for Linux/macOS environments
     args: [...chromium.args, ...args],
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(
