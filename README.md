@@ -67,6 +67,10 @@ const instance = await createInstance({
   // useful to set your own rendering props or use browserless
   browser: browser,
 
+  // browserArgs - additional browser arguments to append to default args
+  // see "Custom Browser Arguments" section for more details
+  browserArgs: ['--custom-arg'],
+
   // requestInterceptor - optional function to intercept and modify network requests
   // Useful when you need to:
   // - Modify headers like User-Agent to access protected image resources
@@ -88,6 +92,28 @@ const instance = await createInstance({
   },
 });
 ```
+
+### `createBrowser(options)`
+
+Create a Puppeteer browser instance with optimized settings for Polotno rendering. This is useful when you want to create a browser separately from the instance.
+
+```js
+const { createBrowser, createInstance } = require('polotno-node');
+
+// Create a browser
+const browser = await createBrowser({
+  browserArgs: ['--custom-arg'], // optional: additional browser arguments
+  // ... any other puppeteer.launch options
+});
+
+// Create instance with the browser
+const instance = await createInstance({
+  key: 'your-key',
+  browser: browser,
+});
+```
+
+**Note:** `createBrowser()` automatically uses the optimized `args` for rendering. You can add custom arguments via the `browserArgs` parameter.
 
 ### `instance.jsonToDataURL(json, attrs)`
 
@@ -307,6 +333,82 @@ const url = await instance.run(async (json) => {
 }, json);
 ```
 
+## Custom Browser Arguments
+
+### Using `args` export
+
+`polotno-node` exports a carefully curated set of Chrome arguments (`args`) that are optimized for server-side rendering. These arguments are automatically used when you call `createInstance()` without providing your own browser.
+
+```js
+const { args } = require('polotno-node');
+
+console.log(args);
+// Will show the default arguments like:
+// ['--disable-web-security', '--allow-file-access-from-files', '--disable-gpu', ...]
+```
+
+### Using with custom browser
+
+When you want to use your own browser instance (e.g., with browserless.io or custom puppeteer configuration), you can still use these default arguments:
+
+```js
+const { createInstance, args } = require('polotno-node');
+const puppeteer = require('puppeteer-core');
+
+// Use polotno-node's default args with your custom browser
+const browser = await puppeteer.launch({
+  args: args,
+  headless: true,
+  // ... other browser options
+});
+
+const instance = await createInstance({
+  key: 'your-key',
+  browser,
+});
+```
+
+### Modifying default arguments
+
+If you need to add or remove specific arguments, you can do so by spreading the array:
+
+```js
+const { createInstance, args } = require('polotno-node');
+const puppeteer = require('puppeteer-core');
+
+// Add custom arguments
+const browser = await puppeteer.launch({
+  args: [...args, '--custom-arg', '--another-custom-arg'],
+});
+
+// Remove specific arguments
+const filteredArgs = args.filter((arg) => arg !== '--disable-gpu');
+const browser2 = await puppeteer.launch({
+  args: filteredArgs,
+});
+
+// Replace specific arguments
+const customArgs = args.map((arg) =>
+  arg === '--disable-web-security' ? '--enable-web-security' : arg
+);
+const browser3 = await puppeteer.launch({
+  args: customArgs,
+});
+```
+
+### Combining with `browserArgs` option
+
+When using `createInstance()` or `createBrowser()`, you can provide additional arguments via `browserArgs` option. These will be appended to the default arguments:
+
+```js
+const { createInstance } = require('polotno-node');
+
+const instance = await createInstance({
+  key: 'your-key',
+  browserArgs: ['--custom-arg', '--another-arg'],
+});
+```
+
 ## Your own client
 
 By default `polotno-node` ships with the default Polotno Editor with its (hopefully) last version. If you use experimental API such as `unstable_registerShapeModel` and `unstable_registerShapeComponent`, the rendering may fail if you use unknown elements types.
@@ -407,18 +509,12 @@ Create `index.mjs`:
 ```js
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
-import { createInstance } from 'polotno-node';
+import { createInstance, args } from 'polotno-node';
 
 export const handler = async (event) => {
   const browser = await puppeteer.launch({
-    args: [
-      ...chromium.args,
-      '--no-sandbox',
-      '--hide-scrollbars',
-      '--disable-web-security',
-      '--allow-file-access-from-files',
-      '--disable-dev-shm-usage',
-    ],
+    // Combine chromium args with polotno-node's optimized args
+    args: [...chromium.args, ...args],
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(),
     headless: true,
@@ -528,19 +624,15 @@ npm install @sparticuz/chromium-min
 
 ```js
 const { createInstance } = require('polotno-node/instance');
+// Import args from main entry point for optimal browser configuration
+const { args } = require('polotno-node');
 const chromium = require('@sparticuz/chromium-min');
 const puppeteer = require('puppeteer-core');
 
 const makeInstance = async () => {
   const browser = await puppeteer.launch({
-    args: [
-      ...chromium.args,
-      '--no-sandbox',
-      '--hide-scrollbars',
-      '--disable-web-security',
-      '--allow-file-access-from-files',
-      '--disable-dev-shm-usage',
-    ],
+    // Combine chromium args with polotno-node's optimized args
+    args: [...chromium.args, ...args],
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(
       'https://github.com/Sparticuz/chromium/releases/download/v110.0.1/chromium-v110.0.1-pack.tar'

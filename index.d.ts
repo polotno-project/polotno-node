@@ -89,6 +89,8 @@ declare module 'polotno-node' {
   }
 
   // Main Module Exports
+  export const args: string[];
+
   export function createBrowser(options?: BrowserOptions): Promise<Browser>;
 
   export function createInstance(

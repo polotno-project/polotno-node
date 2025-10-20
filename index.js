@@ -13,8 +13,10 @@ if (isMacOs || isWindows) {
 
 const { createInstance } = require('./instance');
 
-const minimal_args = [
+const args = [
   'about:blank',
+  '--disable-web-security',
+  '--allow-file-access-from-files',
   '--allow-pre-commit-input',
   '--autoplay-policy=user-gesture-required',
   '--disable-background-networking',
@@ -26,13 +28,11 @@ const minimal_args = [
   '--disable-component-update',
   '--disable-default-apps',
   '--disable-dev-shm-usage',
-  '--no-proxy-server',
-  "--proxy-server='direct://'",
+  '--proxy-server=direct://',
   '--proxy-bypass-list=*',
   '--disable-domain-reliability',
   '--disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process,Translate,BackForwardCache,AvoidUnnecessaryBeforeUnloadCheckSync,IntensiveWakeUpThrottling',
   '--disable-extensions',
-  '--disable-features=AudioServiceOutOfProcess',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
   '--disable-notifications',
@@ -45,9 +45,9 @@ const minimal_args = [
   '--disable-setuid-sandbox',
   '--disable-speech-api',
   '--disable-sync',
+  // Use srgb for identical output across Linux/macOS/Windows and to match how CSS colors/images are defined/assumed on the web.
   '--force-color-profile=srgb',
   '--hide-scrollbars',
-  '--ignore-gpu-blacklist',
   '--metrics-recording-only',
   '--mute-audio',
   '--no-default-browser-check',
@@ -58,9 +58,11 @@ const minimal_args = [
   '--no-zygote',
   '--password-store=basic',
   '--allow-running-insecure-content',
-  // do we need that?
-  // '--single-process',
 
+  // Disable accessibility features to reduce resource usage and improve performance.
+  '--disable-renderer-accessibility',
+  // stable locale → font fallback/hyphenation
+  '--lang=en-US',
   // this line  breaks the rendering on most of OS
   // it doesn't allow creating of pages
   //'--use-gl=swiftshader',
@@ -70,10 +72,51 @@ const minimal_args = [
   '--intensive-wake-up-throttling-policy=0',
   '--font-render-hinting=none',
   '--ignore-gpu-blocklist',
-  '--disable-font-subpixel-positioning',
-  '--force-color-profile=generic-rgb',
+  // don't use this flag, because it makes renderign less accurate
+  // see https://community.polotno.com/c/ask/the-ability-to-exclude-args-from-minimal_args-in-polotno-node
+  // '--disable-font-subpixel-positioning',
   '--text-rendering=geometricprecision',
 ].filter(Boolean);
+
+module.exports.args = args;
+
+/**
+ * Merges browser arguments intelligently, handling duplicates and conflicts.
+ * Later arguments take precedence over earlier ones.
+ * @param {...string[]} argArrays - Arrays of browser arguments to merge
+ * @returns {string[]} Merged array of arguments
+ */
+function mergeArgs(...argArrays) {
+  const argMap = new Map();
+  const warnings = [];
+
+  for (const argArray of argArrays) {
+    for (const arg of argArray) {
+      // Extract the flag name (before '=' if present)
+      const flagMatch = arg.match(/^(--[^=]+)/);
+      const flagName = flagMatch ? flagMatch[1] : arg;
+
+      if (argMap.has(flagName)) {
+        const existingArg = argMap.get(flagName);
+        if (existingArg !== arg) {
+          warnings.push(
+            `Duplicate/conflicting flag detected: "${flagName}". Using: "${arg}" (overriding: "${existingArg}")`
+          );
+        }
+      }
+
+      argMap.set(flagName, arg);
+    }
+  }
+
+  // Log warnings if any duplicates/conflicts were found
+  if (warnings.length > 0) {
+    // console.warn('Browser arguments merged with conflicts:');
+    // warnings.forEach((warning) => console.warn(`  - ${warning}`));
+  }
+
+  return Array.from(argMap.values());
+}
 
 const browserProps = {
   headless: 'new',
@@ -85,13 +128,7 @@ const browserProps = {
 
 async function createBrowser({ browserArgs = [], ...rest } = {}) {
   return puppeteer.launch({
-    args: [
-      ...(isWindows ? [] : chrome.args),
-      ...minimal_args,
-      '--disable-web-security',
-      '--allow-file-access-from-files',
-      ...browserArgs,
-    ],
+    args: mergeArgs(isWindows ? [] : chrome.args, args, browserArgs),
     defaultViewport: chrome.defaultViewport,
 
     executablePath:
