@@ -35,7 +35,6 @@
   "license": "MIT",
   "dependencies": {
     "@sparticuz/chromium": "^143.0.0",
-    "mediabunny": "^1.25.8",
     "puppeteer": "24.32.1",
     "puppeteer-core": "24.32.1",
     "tmp": "^0.2.5"
