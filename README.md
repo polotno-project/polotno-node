@@ -230,13 +230,29 @@ Timeout for loading fonts. By default it is 6000ms.
 const url = await instance.jsonToPDFDataURL(json, { fontLoadTimeout: 10000 });
 ```
 
-### `attrs.htmlTextRenderEnabled`
+### `attrs.richTextEnabled`
 
-Enabled experimental HTML text rendering. By default it is `false`.
+Enable rich text renderin. By default it is `false`.
 
 ```js
 const url = await instance.jsonToPDFDataURL(json, {
+  richTextEnabled: true,
+});
+```
+
+### `attrs.htmlTextRenderEnabled` (deprecated)
+
+⚠️ **Deprecated:** Use `richTextEnabled` instead. This property is maintained for backward compatibility and works as a fallback.
+
+```js
+// Old (deprecated)
+const url = await instance.jsonToPDFDataURL(json, {
   htmlTextRenderEnabled: true,
+});
+
+// New (recommended)
+const url = await instance.jsonToPDFDataURL(json, {
+  richTextEnabled: true,
 });
 ```
 
@@ -326,7 +342,7 @@ You should be able to change config before you call `store.loadJSON` function an
 ```js
 const url = await instance.run(async (json) => {
   // you can use global "config" object that has some functions from "polotno/config" module
-  window.config.unstable_setTextVerticalResizeEnabled(true);
+  window.config.setTextVerticalResizeEnabled(true);
   // you can use global "store" object
   store.loadJSON(json);
   return store.toDataURL();

@@ -5,13 +5,14 @@ import { createStore } from 'polotno/model/store';
 import { toggleFadeInAnimation } from 'polotno/canvas/use-fadein';
 // instead of importing fom config, let's import from direct files
 // to avoid blueprint import
-import { setTextOverflow as unstable_setTextOverflow } from 'polotno/utils/flags';
-import { useHtmlTextRender as unstable_useHtmlTextRender } from 'polotno/utils/flags';
+import { setTextOverflow } from 'polotno/utils/flags';
+import { setRichTextEnabled } from 'polotno/utils/flags';
+import { setTextSplitAllowed } from 'polotno/utils/flags';
+import { setTextVerticalResizeEnabled } from 'polotno/utils/flags';
+
 import { onLoadError } from 'polotno/utils/loader';
-import { setTextVerticalResizeEnabled as unstable_setTextVerticalResizeEnabled } from 'polotno/utils/flags';
 import { setAssetLoadTimeout, setFontLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
-import { setTextSplitAllowed as unstable_setTextSplitAllowed } from 'polotno/utils/flags';
 
 import { jsPDF } from 'jspdf';
 
@@ -20,7 +21,7 @@ import { jsPDF } from 'jspdf';
 window.jspdf = { jsPDF };
 
 toggleFadeInAnimation(false);
-unstable_setTextOverflow('change-font-size');
+setTextOverflow('change-font-size');
 
 const key = new URLSearchParams(location.search).get('key');
 
@@ -31,13 +32,13 @@ const store = createStore({
 window.store = store;
 window.config = {
   addGlobalFont,
-  unstable_useHtmlTextRender,
-  unstable_setTextVerticalResizeEnabled,
-  unstable_setTextOverflow,
+  setRichTextEnabled,
+  setTextVerticalResizeEnabled,
+  setTextOverflow,
   onLoadError,
   setAssetLoadTimeout,
   setFontLoadTimeout,
-  unstable_setTextSplitAllowed,
+  unstable_setTextSplitAllowed: setTextSplitAllowed,
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

@@ -93,7 +93,7 @@ test('rich text support', async (t) => {
     instance,
     t,
     attrs: {
-      htmlTextRenderEnabled: true,
+      richTextEnabled: true,
     },
     // sometimes is renders a bit differently
     //
@@ -139,7 +139,7 @@ test('vertical html text with align', async (t) => {
     t,
     attrs: {
       textVerticalResizeEnabled: true,
-      htmlTextRenderEnabled: true,
+      richTextEnabled: true,
       pixelRatio: 0.3,
     },
   });
@@ -356,7 +356,7 @@ test('render paragraphs with rich text', async (t) => {
     jsonFileName: 'paragraphs.json',
     instance,
     attrs: {
-      htmlTextRenderEnabled: true,
+      richTextEnabled: true,
     },
     t,
   });
@@ -375,7 +375,7 @@ test('render several pages with different fonts', async (t) => {
     fs.readFileSync('./test/samples/different-fonts.json')
   );
   const dataUrl = await instance.run(async (json) => {
-    window.config.unstable_useHtmlTextRender(true);
+    window.config.setRichTextEnabled(true);
     store.loadJSON(json);
     await store.toDataURL({ pageId: store.pages[0].id });
     return await store.toDataURL({ pageId: store.pages[1].id });

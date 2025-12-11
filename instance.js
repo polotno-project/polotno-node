@@ -141,27 +141,24 @@ module.exports.createInstance = async ({
           }
         }, args[1].fontLoadTimeout);
       }
-      if (args[1]?.htmlTextRenderEnabled) {
+      if (args[1]?.htmlTextRenderEnabled || args[1]?.richTextEnabled) {
         await page.evaluate(() => {
-          if (window.config && window.config.unstable_useHtmlTextRender) {
-            window.config.unstable_useHtmlTextRender(true);
+          if (window.config && window.config.setRichTextEnabled) {
+            window.config.setRichTextEnabled(true);
           } else {
             console.error(
-              'unstable_useHtmlTextRender function is not defined in the client.'
+              'setRichTextEnabled function is not defined in the client.'
             );
           }
         });
       }
       if (args[1]?.textVerticalResizeEnabled) {
         await page.evaluate(() => {
-          if (
-            window.config &&
-            window.config.unstable_setTextVerticalResizeEnabled
-          ) {
-            window.config.unstable_setTextVerticalResizeEnabled(true);
+          if (window.config && window.config.setTextVerticalResizeEnabled) {
+            window.config.setTextVerticalResizeEnabled(true);
           } else {
             console.error(
-              'unstable_setTextVerticalResizeEnabled function is not defined in the client.'
+              'setTextVerticalResizeEnabled function is not defined in the client.'
             );
           }
         });
@@ -185,11 +182,11 @@ module.exports.createInstance = async ({
       }
       if (args[1]?.textOverflow) {
         await page.evaluate((overflow) => {
-          if (window.config && window.config.unstable_setTextOverflow) {
-            window.config.unstable_setTextOverflow(overflow);
+          if (window.config && window.config.setTextOverflow) {
+            window.config.setTextOverflow(overflow);
           } else {
             console.error(
-              'unstable_setTextOverflow function is not defined in the client.'
+              'setTextOverflow function is not defined in the client.'
             );
           }
         }, args[1].textOverflow);
