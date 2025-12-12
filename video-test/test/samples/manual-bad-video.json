@@ -1,0 +1,86 @@
+{
+  "width": 1080,
+  "height": 1920,
+  "fonts": [],
+  "pages": [
+    {
+      "id": "bdKVVmJZ5D",
+      "children": [
+        {
+          "id": "DwTjpQvJbQ",
+          "type": "video",
+          "name": "video",
+          "opacity": 1,
+          "visible": true,
+          "selectable": true,
+          "removable": true,
+          "alwaysOnTop": false,
+          "showInExport": true,
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920,
+          "rotation": 0,
+          "animations": [
+            {
+              "delay": 330,
+              "duration": 1200,
+              "enabled": true,
+              "type": "enter",
+              "name": "fade",
+              "data": {}
+            },
+            {
+              "delay": 330,
+              "duration": 1200,
+              "enabled": true,
+              "type": "exit",
+              "name": "fade",
+              "data": {}
+            }
+          ],
+          "blurEnabled": false,
+          "blurRadius": 10,
+          "brightnessEnabled": false,
+          "brightness": 0,
+          "sepiaEnabled": false,
+          "grayscaleEnabled": false,
+          "shadowEnabled": false,
+          "shadowBlur": 5,
+          "shadowOffsetX": 0,
+          "shadowOffsetY": 0,
+          "shadowColor": "black",
+          "shadowOpacity": 1,
+          "draggable": true,
+          "resizable": true,
+          "contentEditable": true,
+          "styleEditable": true,
+          "src": "https://broken.video/file.mp4",
+          "cropX": 0,
+          "cropY": 0,
+          "cropWidth": 1,
+          "cropHeight": 1,
+          "cornerRadius": 0,
+          "flipX": false,
+          "flipY": false,
+          "clipSrc": "",
+          "borderColor": "black",
+          "borderSize": 0,
+          "keepRatio": false,
+          "duration": 19220,
+          "startTime": 0,
+          "endTime": 1,
+          "volume": 1
+        }
+      ],
+      "width": "auto",
+      "height": "auto",
+      "background": "white",
+      "bleed": 0,
+      "duration": 19220
+    }
+  ],
+  "audios": [],
+  "unit": "px",
+  "dpi": 72
+}

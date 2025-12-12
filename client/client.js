@@ -30,6 +30,17 @@ const store = createStore({
 });
 
 window.store = store;
+
+// Lazy loader for video export module.
+// NOTE: this is intentionally NOT part of window.config (config should remain config-only).
+let __videoExportModulePromise = null;
+window.loadVideoExportModule = async () => {
+  if (!__videoExportModulePromise) {
+    __videoExportModulePromise = import('@polotno/video-export');
+  }
+  return await __videoExportModulePromise;
+};
+
 window.config = {
   addGlobalFont,
   setRichTextEnabled,

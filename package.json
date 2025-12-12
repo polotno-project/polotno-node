@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "ava --timeout=30s --concurrency=2",
+    "test": "npm run build && ava --timeout=5m --concurrency=1 test/test.mjs video-test/test.mjs",
     "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
     "dev": "vite ./client.html"
   },
@@ -19,6 +19,7 @@
   ],
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "devDependencies": {
+    "@polotno/video-export": "^0.0.2",
     "ava": "^6.4.1",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
@@ -29,7 +30,8 @@
     "polotno": "2.34.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^7.2.7"
+    "vite": "^7.2.7",
+    "web-audio-api": "^0.2.2"
   },
   "author": "Anton Lavrenov",
   "license": "MIT",

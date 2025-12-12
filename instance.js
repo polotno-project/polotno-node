@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
 
 module.exports.createPage = async (browser, url, requestInterceptor) => {
@@ -176,8 +177,8 @@ module.exports.createInstance = async ({
       }
       if (args[1]?.onProgress) {
         const originalProgress = args[1].onProgress;
-        await page.exposeFunction('onProgress', async (progress) => {
-          originalProgress(progress);
+        await page.exposeFunction('onProgress', async (progress, frameTime) => {
+          originalProgress(progress, frameTime);
         });
       }
       if (args[1]?.textOverflow) {
@@ -299,6 +300,94 @@ module.exports.createInstance = async ({
     return blob;
   };
 
+  const jsonToVideo = async (json, attrs) => {
+    if (!attrs || !attrs.out) {
+      throw new Error('jsonToVideo requires attrs.out to be specified');
+    }
+
+    const dataURL = await run(
+      async (json, attrs) => {
+        const pixelRatio = attrs.pixelRatio || 1;
+        store.loadJSON(json);
+        await store.waitLoading();
+        // keep store internals consistent with image/pdf exports
+        if (store.setElementsPixelRatio) {
+          store.setElementsPixelRatio(pixelRatio);
+        }
+
+        // fail fast if we already captured an asset-loading error
+        if (window._polotnoError) {
+          throw new Error(String(window._polotnoError));
+        }
+
+        // loop through all pages and wait for loading for all layout calculations
+        // (this helps stabilize text/layout across multi-page designs)
+        for (const page of store.pages) {
+          store.selectPage(page.id);
+          await store.waitLoading();
+          if (window._polotnoError) {
+            throw new Error(String(window._polotnoError));
+          }
+        }
+        if (store.pages.length > 0) {
+          store.selectPage(store.pages[0].id);
+          await store.waitLoading();
+        }
+
+        //
+        window.config.setTextOverflow('resize');
+
+        if (!window.loadVideoExportModule) {
+          throw new Error(
+            'Video export module loader is not defined in the client. Expected window.loadVideoExportModule().'
+          );
+        }
+
+        const { storeToVideo } = await window.loadVideoExportModule();
+
+        // Use exposed progress callback if available
+        const progressCallback = window.onProgress
+          ? (progress, frameTime) => {
+              // abort export ASAP on captured asset errors
+              if (window._polotnoError) {
+                throw new Error(String(window._polotnoError));
+              }
+              return window.onProgress(progress, frameTime);
+            }
+          : undefined;
+
+        const videoBlob = await storeToVideo({
+          store,
+          fps: attrs.fps,
+          pixelRatio,
+          onProgress: progressCallback,
+        });
+
+        // Convert Blob to data URL (so Node can write it)
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(videoBlob);
+        });
+        return dataUrl;
+      },
+      json,
+      attrs || {}
+    );
+
+    // Extract base64 data and write to file
+    const base64Data = dataURL.split('base64,')[1];
+    if (!base64Data) {
+      throw new Error('Invalid video data URL returned from client');
+    }
+
+    const buffer = Buffer.from(base64Data, 'base64');
+    fs.writeFileSync(attrs.out, buffer);
+
+    return attrs.out;
+  };
+
   const instance = {
     close: async () => {
       createdInstances.splice(createdInstances.indexOf(instance), 1);
@@ -314,6 +403,7 @@ module.exports.createInstance = async ({
     jsonToBlob,
     jsonToGIFDataURL,
     jsonToGIFBase64,
+    jsonToVideo,
     createPage: async () =>
       await module.exports.createPage(browser, visitPage, requestInterceptor),
   };

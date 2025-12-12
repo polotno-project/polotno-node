@@ -28,6 +28,13 @@ declare module 'polotno-node' {
     cropMarkSize?: number;
   }
 
+  export interface VideoRenderOptions extends RenderOptions {
+    out: string;
+    fps?: number;
+    pixelRatio?: number;
+    onProgress?: (progress: number, frameTime?: number) => void;
+  }
+
   // JSON Structure for Rendering
   export interface RenderJSON {
     [key: string]: any;
@@ -84,6 +91,10 @@ declare module 'polotno-node' {
     jsonToGIFBase64: (
       json: RenderJSON,
       options?: RenderOptions
+    ) => Promise<string>;
+    jsonToVideo: (
+      json: RenderJSON,
+      options: VideoRenderOptions
     ) => Promise<string>;
     createPage: () => Promise<Page>;
   }

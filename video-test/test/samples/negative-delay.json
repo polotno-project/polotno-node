@@ -1,0 +1,34 @@
+{
+  "width": 1080,
+  "height": 1920,
+  "fonts": [],
+  "pages": [
+    {
+      "id": "c75af4d1-6605-4f3d-b5ba-211ffbf8735f",
+      "children": [],
+      "width": "auto",
+      "height": "auto",
+      "background": "rgb(0, 0, 0, 0)",
+      "bleed": 0,
+      "duration": 7000
+    }
+  ],
+  "audios": [
+    {
+      "id": "9734307f-ec91-46b8-8061-4e5b31309db4",
+      "page_id": "c75af4d1-6605-4f3d-b5ba-211ffbf8735f",
+      "src": "https://loyalty.nyc3.digitaloceanspaces.com/video/wind-swoosh.wav",
+      "duration": 1000,
+      "startTime": 0,
+      "endTime": 1,
+      "delay": -500,
+      "volume": 1,
+      "slide": 1000,
+      "edelay": 0,
+      "text": ""
+    }
+  ],
+  "unit": "px",
+  "dpi": 72,
+  "custom": null
+}
