@@ -5,9 +5,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "npm run build && vitest run --pool=forks --maxWorkers=2 --testTimeout=30000 test/static/static.test.mjs",
-    "test:video": "npm run build && vitest run --pool=forks --maxWorkers=1 --testTimeout=300000 test/video/video.test.mjs",
-    "test:all": "npm run build && vitest run --pool=forks --maxWorkers=1 --testTimeout=300000 test/static/static.test.mjs test/video/video.test.mjs",
+    "test": "npm run build && vitest run test/static/static.test.mjs",
+    "test:video": "npm run build && vitest run test/video/video.test.mjs",
+    "test:all": "npm run build && vitest run test/static/static.test.mjs test/video/video.test.mjs",
     "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
     "dev": "vite ./client.html"
   },

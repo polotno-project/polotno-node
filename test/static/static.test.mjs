@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect } from 'vitest';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -85,26 +85,25 @@ async function matchImageSnapshot({
 }
 
 describe('static export', () => {
-  /** @type {import('../../index.js').Instance | undefined} */
-  let instance;
+  function testWithInstance(name, fn, options = {}) {
+    test.concurrent(name, async () => {
+      const instance = await createInstance({ key, ...options });
+      try {
+        await fn(instance);
+      } finally {
+        await instance.close();
+      }
+    });
+  }
 
-  beforeEach(async () => {
-    instance = await createInstance({ key });
-  });
-
-  afterEach(async () => {
-    await instance?.close();
-    instance = undefined;
-  });
-
-  test('sample export', async () => {
+  testWithInstance('sample export', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'polotno-1.json',
       instance,
     });
   });
 
-  test('rich text support', async () => {
+  testWithInstance('rich text support', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'rich-text.json',
       instance,
@@ -117,7 +116,7 @@ describe('static export', () => {
     });
   });
 
-  test('vertical text align', async () => {
+  testWithInstance('vertical text align', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'vertical-align.json',
       instance,
@@ -127,7 +126,7 @@ describe('static export', () => {
     });
   });
 
-  test('optionally disable text fit', async () => {
+  testWithInstance('optionally disable text fit', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'resize-text.json',
       instance,
@@ -137,7 +136,7 @@ describe('static export', () => {
     });
   });
 
-  test('vertical html text with align', async () => {
+  testWithInstance('vertical html text with align', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'vertical-align-html.json',
       instance,
@@ -149,7 +148,7 @@ describe('static export', () => {
     });
   });
 
-  test('fail on timeout', async () => {
+  testWithInstance('fail on timeout', async (instance) => {
     const json = JSON.parse(
       fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
     );
@@ -160,7 +159,7 @@ describe('static export', () => {
     ).rejects.toThrow();
   });
 
-  test('fail on font timeout', async () => {
+  testWithInstance('fail on font timeout', async (instance) => {
     const json = JSON.parse(
       fs.readFileSync(join(fixturesDir, 'polotno-with-text.json'))
     );
@@ -172,17 +171,20 @@ describe('static export', () => {
     ).rejects.toThrow();
   });
 
-  test('Undefined fonts should fallback and we can skip it', async () => {
-    await matchImageSnapshot({
-      jsonFileName: 'skip-font-error.json',
-      instance,
-      attrs: {
-        skipFontError: true,
-      },
-    });
-  });
+  testWithInstance(
+    'Undefined fonts should fallback and we can skip it',
+    async (instance) => {
+      await matchImageSnapshot({
+        jsonFileName: 'skip-font-error.json',
+        instance,
+        attrs: {
+          skipFontError: true,
+        },
+      });
+    }
+  );
 
-  test('skip error on image loading', async () => {
+  testWithInstance('skip error on image loading', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'skip-image-error.json',
       instance,
@@ -194,7 +196,7 @@ describe('static export', () => {
 
   // when a text has bad font (we can't load it)
   // we should still wait and then try to resize text to fit bounding box
-  test('Bad font resize', async () => {
+  testWithInstance('Bad font resize', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'bad-font-resize.json',
       instance,
@@ -204,7 +206,7 @@ describe('static export', () => {
     });
   });
 
-  test('Allow split text', async () => {
+  test.concurrent('Allow split text', async () => {
     const instances = [];
     try {
       // run several iterations, because we had very rare cases when text was not split correctly
@@ -224,59 +226,53 @@ describe('static export', () => {
     }
   });
 
-  test('Should clear error with no parallel pages', async () => {
-    // override: this test needs non-parallel instance
-    const localInstance = await createInstance({
-      key,
-      useParallelPages: false,
-    });
-    const json = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'bad-image-url.json'))
-    );
-    try {
-      await localInstance.jsonToDataURL(json);
-    } catch (e) {
-      expect(e.message).toContain('image');
-    }
-    const json2 = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
-    );
-    await localInstance.jsonToDataURL(json2);
-    expect(true).toBe(true);
-    await localInstance.close();
-  });
+  testWithInstance(
+    'Should clear error with no parallel pages',
+    async (instance) => {
+      const json = JSON.parse(
+        fs.readFileSync(join(fixturesDir, 'bad-image-url.json'))
+      );
+      try {
+        await instance.jsonToDataURL(json);
+      } catch (e) {
+        expect(e.message).toContain('image');
+      }
+      const json2 = JSON.parse(
+        fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+      );
+      await instance.jsonToDataURL(json2);
+      expect(true).toBe(true);
+    },
+    { useParallelPages: false }
+  );
 
-  test('Should throw error when several task in the process for non parallel', async () => {
-    // override: this test needs non-parallel instance
-    const localInstance = await createInstance({
-      key,
-      useParallelPages: false,
-    });
-    const json = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
-    );
-    await expect(
-      Promise.all([json, json].map((j) => localInstance.jsonToDataURL(j)))
-    ).rejects.toThrow();
-    await localInstance.close();
-  });
+  testWithInstance(
+    'Should throw error when several task in the process for non parallel',
+    async (instance) => {
+      const json = JSON.parse(
+        fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+      );
+      await expect(
+        Promise.all([json, json].map((j) => instance.jsonToDataURL(j)))
+      ).rejects.toThrow();
+    },
+    { useParallelPages: false }
+  );
 
-  test('Should not throw error when several task in sequence for non parallel', async () => {
-    // override: this test needs non-parallel instance
-    const localInstance = await createInstance({
-      key,
-      useParallelPages: false,
-    });
-    const json = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
-    );
-    await localInstance.jsonToDataURL(json);
-    await localInstance.jsonToDataURL(json);
-    expect(true).toBe(true);
-    await localInstance.close();
-  });
+  testWithInstance(
+    'Should not throw error when several task in sequence for non parallel',
+    async (instance) => {
+      const json = JSON.parse(
+        fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+      );
+      await instance.jsonToDataURL(json);
+      await instance.jsonToDataURL(json);
+      expect(true).toBe(true);
+    },
+    { useParallelPages: false }
+  );
 
-  test('buffer canvas rendering', async () => {
+  testWithInstance('buffer canvas rendering', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'buffer-canvas.json',
       instance,
@@ -286,7 +282,7 @@ describe('static export', () => {
     });
   });
 
-  test('progress on pdf export', async () => {
+  testWithInstance('progress on pdf export', async (instance) => {
     const json = { pages: [{ id: '1' }] };
 
     let progressCalled = false;
@@ -299,7 +295,7 @@ describe('static export', () => {
   });
 
   // image in this test is no usual
-  test('weird-image', async () => {
+  testWithInstance('weird-image', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'weird-image.json',
       instance,
@@ -307,7 +303,7 @@ describe('static export', () => {
   });
 
   // image in this test is no usual
-  test('upper-case-resize', async () => {
+  testWithInstance('upper-case-resize', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'upper-case-resize.json',
       instance,
@@ -315,21 +311,21 @@ describe('static export', () => {
   });
 
   // font family name has characters that must be escaped
-  test('weird-font-family', async () => {
+  testWithInstance('weird-font-family', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'weird-font-family.json',
       instance,
     });
   });
 
-  test('render svg without defined size', async () => {
+  testWithInstance('render svg without defined size', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'svg-without-size.json',
       instance,
     });
   });
 
-  test('render paragraphs with rich text', async () => {
+  testWithInstance('render paragraphs with rich text', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'paragraphs.json',
       instance,
@@ -344,34 +340,37 @@ describe('static export', () => {
   // the task of the test is to render first page with font A, then second page with font A and B
   // issue is only on page two
   // we can't render ONLY second page, because without first page, the issue is not reproducible
-  test('render several pages with different fonts', async () => {
-    const json = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'different-fonts.json'))
-    );
-    const dataUrl = await instance.run(async (json) => {
-      window.config.setRichTextEnabled(true);
-      store.loadJSON(json);
-      await store.toDataURL({ pageId: store.pages[0].id });
-      return await store.toDataURL({ pageId: store.pages[1].id });
-    }, json);
-    const base64 = dataUrl.split('base64,')[1];
-    const baseName = 'different-fonts';
-    const currentPath = join(currentDir, `${baseName}.png`);
-    const goldenPath = join(goldensDir, `${baseName}.png`);
-    const diffPath = join(diffDir, `${baseName}.png`);
+  testWithInstance(
+    'render several pages with different fonts',
+    async (instance) => {
+      const json = JSON.parse(
+        fs.readFileSync(join(fixturesDir, 'different-fonts.json'))
+      );
+      const dataUrl = await instance.run(async (json) => {
+        window.config.setRichTextEnabled(true);
+        store.loadJSON(json);
+        await store.toDataURL({ pageId: store.pages[0].id });
+        return await store.toDataURL({ pageId: store.pages[1].id });
+      }, json);
+      const base64 = dataUrl.split('base64,')[1];
+      const baseName = 'different-fonts';
+      const currentPath = join(currentDir, `${baseName}.png`);
+      const goldenPath = join(goldensDir, `${baseName}.png`);
+      const diffPath = join(diffDir, `${baseName}.png`);
 
-    fs.writeFileSync(currentPath, base64, 'base64');
-    // check snapshot version - create if missing (auto-golden creation)
-    if (!fs.existsSync(goldenPath)) {
-      fs.writeFileSync(goldenPath, base64, 'base64');
-      console.log(`Created new golden file: ${goldenPath}`);
+      fs.writeFileSync(currentPath, base64, 'base64');
+      // check snapshot version - create if missing (auto-golden creation)
+      if (!fs.existsSync(goldenPath)) {
+        fs.writeFileSync(goldenPath, base64, 'base64');
+        console.log(`Created new golden file: ${goldenPath}`);
+      }
+      const img1 = PNG.sync.read(fs.readFileSync(currentPath));
+      const img2 = PNG.sync.read(fs.readFileSync(goldenPath));
+      const { numDiffPixels, diff } = getPixelsDiff(img1, img2);
+      if (numDiffPixels > 0) {
+        fs.writeFileSync(diffPath, PNG.sync.write(diff));
+      }
+      expect(numDiffPixels).toBe(0);
     }
-    const img1 = PNG.sync.read(fs.readFileSync(currentPath));
-    const img2 = PNG.sync.read(fs.readFileSync(goldenPath));
-    const { numDiffPixels, diff } = getPixelsDiff(img1, img2);
-    if (numDiffPixels > 0) {
-      fs.writeFileSync(diffPath, PNG.sync.write(diff));
-    }
-    expect(numDiffPixels).toBe(0);
-  });
+  );
 });

@@ -135,7 +135,7 @@ for (const name of getFixtureNames()) {
   //   continue;
   // }
   if (spec.kind === 'throws') {
-    test(name, async () => {
+    test.concurrent(name, async () => {
       const startTime = Date.now();
       await expect(snapshot(name, spec.options)).rejects.toThrow(spec.toThrow);
       const durationMs = Date.now() - startTime;
@@ -146,7 +146,7 @@ for (const name of getFixtureNames()) {
       }
     });
   } else {
-    test(name, async () => {
+    test.concurrent(name, async () => {
       await testJSON(name, spec.options);
     });
   }
