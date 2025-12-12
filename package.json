@@ -5,9 +5,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "npm run build && ava --timeout=30s --concurrency=2 test/static/static.test.mjs",
-    "test:video": "npm run build && ava --timeout=5m --concurrency=1 test/video/video.test.mjs",
-    "test:all": "npm run build && ava --timeout=5m --concurrency=1 test/static/static.test.mjs test/video/video.test.mjs",
+    "test": "npm run build && vitest run --pool=forks --maxWorkers=2 --testTimeout=30000 test/static/static.test.mjs",
+    "test:video": "npm run build && vitest run --pool=forks --maxWorkers=1 --testTimeout=300000 test/video/video.test.mjs",
+    "test:all": "npm run build && vitest run --pool=forks --maxWorkers=1 --testTimeout=300000 test/static/static.test.mjs test/video/video.test.mjs",
     "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
     "dev": "vite ./client.html"
   },
@@ -22,7 +22,6 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "devDependencies": {
     "@polotno/video-export": "^0.0.2",
-    "ava": "^6.4.1",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "fluent-ffmpeg": "^2.1.3",
@@ -33,6 +32,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vite": "^7.2.7",
+    "vitest": "^4.0.15",
     "web-audio-api": "^0.2.2"
   },
   "author": "Anton Lavrenov",

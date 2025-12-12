@@ -1,4 +1,4 @@
-import test from 'ava';
+import { test, expect } from 'vitest';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -77,13 +77,13 @@ async function snapshot(name, options = {}) {
   }
 }
 
-const testJSON = async (t, name, options = {}) => {
+const testJSON = async (name, options = {}) => {
   const result = await snapshot(name, options);
   if (result) {
-    t.is(result.frameMismatchCount, 0, 'Video frames should match');
-    t.is(result.audioMismatch, 0, 'Audio should match');
+    expect(result.frameMismatchCount, 'Video frames should match').toBe(0);
+    expect(result.audioMismatch, 'Audio should match').toBe(0);
   }
-  t.pass();
+  expect(true).toBe(true);
 };
 
 /**
@@ -119,23 +119,12 @@ const fixtureSpecs = {
   // },
   'bad-image': {
     kind: 'throws',
-    assert: (t, err, { durationMs }) => {
-      t.true(durationMs < 5000, 'Should fail sooner on error');
-      t.true(
-        err.message.includes('Asset loading error'),
-        `Expected "Asset loading error", got: ${err.message}`
-      );
-    },
+    maxDurationMs: 5000,
+    toThrow: /Asset loading error/,
   },
   'manual-bad-video': {
     kind: 'throws',
-    assert: (t, err) => {
-      const ok =
-        err.message.includes('Asset loading error') ||
-        err.message.includes('Video failed to load') ||
-        err.message.includes('video with id');
-      t.true(ok, `Unexpected error message: ${err.message}`);
-    },
+    toThrow: /Asset loading error|Video failed to load|video with id/,
   },
 };
 
@@ -146,17 +135,19 @@ for (const name of getFixtureNames()) {
   //   continue;
   // }
   if (spec.kind === 'throws') {
-    test(name, async (t) => {
+    test(name, async () => {
       const startTime = Date.now();
-      const err = await t.throwsAsync(() => snapshot(name, spec.options));
+      await expect(snapshot(name, spec.options)).rejects.toThrow(spec.toThrow);
       const durationMs = Date.now() - startTime;
-      if (spec.assert) {
-        spec.assert(t, err, { durationMs });
+      if (spec.maxDurationMs != null) {
+        expect(durationMs, 'Should fail sooner on error').toBeLessThan(
+          spec.maxDurationMs
+        );
       }
     });
   } else {
-    test(name, async (t) => {
-      await testJSON(t, name, spec.options);
+    test(name, async () => {
+      await testJSON(name, spec.options);
     });
   }
 }
