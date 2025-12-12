@@ -1,10 +1,28 @@
 import test from 'ava';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
-import { createInstance } from '../index.js';
+import { createInstance } from '../../index.js';
 import { config } from 'dotenv';
 config({ quiet: true });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const testDir = __dirname;
+const fixturesDir = join(testDir, 'fixtures');
+const goldensDir = join(testDir, 'goldens');
+const outputDir = join(testDir, '..', 'output', 'static');
+const currentDir = join(outputDir, 'current');
+const diffDir = join(outputDir, 'diff');
+
+// Ensure output directories exist
+[outputDir, currentDir, diffDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 const key = process.env.POLOTNO_KEY;
 
@@ -37,38 +55,32 @@ async function matchImageSnapshot({
   attrs,
   tolerance = 0,
 }) {
+  const baseName = jsonFileName.replace('.json', '');
+  const jsonPath = join(fixturesDir, jsonFileName);
+  const goldenPath = join(goldensDir, `${baseName}.png`);
+  const currentPath = join(currentDir, `${baseName}.png`);
+  const diffPath = join(diffDir, `${baseName}.png`);
+
   // read json
-  const json = JSON.parse(fs.readFileSync('./test/samples/' + jsonFileName));
+  const json = JSON.parse(fs.readFileSync(jsonPath));
   // export to base64
   const base64 = await instance.jsonToImageBase64(json, attrs);
   // write current version
-  fs.writeFileSync(
-    './test/samples/' + jsonFileName + '-current-export.png',
-    base64,
-    'base64'
-  );
-  // check snapshot version
-  if (!fs.existsSync('./test/samples/' + jsonFileName + '-export.png')) {
-    fs.writeFileSync(
-      './test/samples/' + jsonFileName + '-export.png',
-      base64,
-      'base64'
-    );
+  fs.writeFileSync(currentPath, base64, 'base64');
+
+  // check snapshot version - create if missing (auto-golden creation)
+  if (!fs.existsSync(goldenPath)) {
+    fs.writeFileSync(goldenPath, base64, 'base64');
+    console.log(`Created new golden file: ${goldenPath}`);
   }
+
   // compare
-  const img1 = PNG.sync.read(
-    fs.readFileSync('./test/samples/' + jsonFileName + '-current-export.png')
-  );
-  const img2 = PNG.sync.read(
-    fs.readFileSync('./test/samples/' + jsonFileName + '-export.png')
-  );
+  const img1 = PNG.sync.read(fs.readFileSync(currentPath));
+  const img2 = PNG.sync.read(fs.readFileSync(goldenPath));
   const { numDiffPixels, diff } = getPixelsDiff(img1, img2);
   if (numDiffPixels > tolerance) {
     console.log(numDiffPixels, tolerance);
-    fs.writeFileSync(
-      './test/samples/' + jsonFileName + '-diff.png',
-      PNG.sync.write(diff)
-    );
+    fs.writeFileSync(diffPath, PNG.sync.write(diff));
   }
   t.is(numDiffPixels, 0);
 }
@@ -149,7 +161,7 @@ test('fail on timeout', async (t) => {
   const instance = await createInstance({ key });
   t.teardown(() => instance.close());
 
-  const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
+  const json = JSON.parse(fs.readFileSync(join(fixturesDir, 'polotno-1.json')));
   const error = await t.throwsAsync(async () => {
     await instance.jsonToImageBase64(json, {
       assetLoadTimeout: 1,
@@ -162,7 +174,7 @@ test('fail on font timeout', async (t) => {
   t.teardown(() => instance.close());
 
   const json = JSON.parse(
-    fs.readFileSync('./test/samples/polotno-with-text.json')
+    fs.readFileSync(join(fixturesDir, 'polotno-with-text.json'))
   );
 
   const error = await t.throwsAsync(async () => {
@@ -239,13 +251,17 @@ test('Should clear error with no parallel pages', async (t) => {
   const instance = await createInstance({ key, useParallelPages: false });
   t.teardown(() => instance.close());
 
-  const json = JSON.parse(fs.readFileSync('./test/samples/bad-image-url.json'));
+  const json = JSON.parse(
+    fs.readFileSync(join(fixturesDir, 'bad-image-url.json'))
+  );
   try {
     await instance.jsonToDataURL(json);
   } catch (e) {
     t.is(e.message.indexOf('image') > -1, true);
   }
-  const json2 = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
+  const json2 = JSON.parse(
+    fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+  );
   await instance.jsonToDataURL(json2);
   t.assert(true);
 });
@@ -254,7 +270,7 @@ test('Should throw error when several task in the process for non parallel', asy
   const instance = await createInstance({ key, useParallelPages: false });
   t.teardown(() => instance.close());
 
-  const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
+  const json = JSON.parse(fs.readFileSync(join(fixturesDir, 'polotno-1.json')));
   try {
     await Promise.all([json, json].map((j) => instance.jsonToDataURL(j)));
     t.assert(false, 'no error triggered');
@@ -267,7 +283,7 @@ test('Should not throw error when several task in sequence for non parallel', as
   const instance = await createInstance({ key, useParallelPages: false });
   t.teardown(() => instance.close());
 
-  const json = JSON.parse(fs.readFileSync('./test/samples/polotno-1.json'));
+  const json = JSON.parse(fs.readFileSync(join(fixturesDir, 'polotno-1.json')));
   await instance.jsonToDataURL(json);
   await instance.jsonToDataURL(json);
   t.assert(true);
@@ -355,10 +371,10 @@ test('render paragraphs with rich text', async (t) => {
   await matchImageSnapshot({
     jsonFileName: 'paragraphs.json',
     instance,
+    t,
     attrs: {
       richTextEnabled: true,
     },
-    t,
   });
 });
 
@@ -372,7 +388,7 @@ test('render several pages with different fonts', async (t) => {
   t.teardown(() => instance.close());
 
   const json = JSON.parse(
-    fs.readFileSync('./test/samples/different-fonts.json')
+    fs.readFileSync(join(fixturesDir, 'different-fonts.json'))
   );
   const dataUrl = await instance.run(async (json) => {
     window.config.setRichTextEnabled(true);
@@ -381,31 +397,22 @@ test('render several pages with different fonts', async (t) => {
     return await store.toDataURL({ pageId: store.pages[1].id });
   }, json);
   const base64 = dataUrl.split('base64,')[1];
-  fs.writeFileSync(
-    './test/samples/different-fonts-current-export.png',
-    base64,
-    'base64'
-  );
-  // check snapshot version
-  if (!fs.existsSync('./test/samples/different-fonts-export.png')) {
-    fs.writeFileSync(
-      './test/samples/different-fonts-export.png',
-      base64,
-      'base64'
-    );
+  const baseName = 'different-fonts';
+  const currentPath = join(currentDir, `${baseName}.png`);
+  const goldenPath = join(goldensDir, `${baseName}.png`);
+  const diffPath = join(diffDir, `${baseName}.png`);
+
+  fs.writeFileSync(currentPath, base64, 'base64');
+  // check snapshot version - create if missing (auto-golden creation)
+  if (!fs.existsSync(goldenPath)) {
+    fs.writeFileSync(goldenPath, base64, 'base64');
+    console.log(`Created new golden file: ${goldenPath}`);
   }
-  const img1 = PNG.sync.read(
-    fs.readFileSync('./test/samples/different-fonts-current-export.png')
-  );
-  const img2 = PNG.sync.read(
-    fs.readFileSync('./test/samples/different-fonts-export.png')
-  );
+  const img1 = PNG.sync.read(fs.readFileSync(currentPath));
+  const img2 = PNG.sync.read(fs.readFileSync(goldenPath));
   const { numDiffPixels, diff } = getPixelsDiff(img1, img2);
   if (numDiffPixels > 0) {
-    fs.writeFileSync(
-      './test/samples/different-fonts-diff.png',
-      PNG.sync.write(diff)
-    );
+    fs.writeFileSync(diffPath, PNG.sync.write(diff));
   }
   await instance.close();
   t.is(numDiffPixels, 0);

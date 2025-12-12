@@ -22,7 +22,6 @@ async function calculateFileHash(filePath) {
     const partSize = Math.floor(fileSize / 10);
     const buffer = Buffer.alloc(partSize);
 
-    // Function to read and hash a part
     async function readAndHashPart(position) {
       const { bytesRead } = await fileHandle.read(
         buffer,
@@ -33,16 +32,7 @@ async function calculateFileHash(filePath) {
       if (bytesRead > 0) hashSum.update(buffer.slice(0, bytesRead));
     }
 
-    // Hash first part
     await readAndHashPart(0);
-
-    // Hash 3 evenly distributed parts from the middle
-    // for (let i = 1; i <= 3; i++) {
-    //   const position = Math.floor((fileSize * (i * 2)) / 10);
-    //   await readAndHashPart(position);
-    // }
-
-    // Hash last part
     await readAndHashPart(Math.max(fileSize - partSize, 0));
   } finally {
     await fileHandle.close();
@@ -54,16 +44,14 @@ async function calculateFileHash(filePath) {
 export async function compareVideos(
   video1Path,
   video2Path,
-  similarityThreshold
+  similarityThreshold,
+  { diffDir } = {}
 ) {
-  // Calculate hash sums of input files
-
   const [hash1, hash2] = await Promise.all([
     calculateFileHash(video1Path),
     calculateFileHash(video2Path),
   ]);
 
-  // If hash sums are equal, return empty object
   if (hash1 === hash2) {
     return {
       frameMismatchCount: 0,
@@ -71,7 +59,6 @@ export async function compareVideos(
     };
   }
 
-  // Compare general video properties
   const [info1, info2] = await Promise.all([
     getVideoInfo(video1Path),
     getVideoInfo(video2Path),
@@ -81,7 +68,6 @@ export async function compareVideos(
     throw new Error('Video durations do not match');
   }
 
-  // compare fps
   if (info1.streams[0].r_frame_rate !== info2.streams[0].r_frame_rate) {
     throw new Error('Video fps do not match');
   }
@@ -97,14 +83,13 @@ export async function compareVideos(
     );
   }
 
-  // Compare video frames
   const frameMismatchCount = await compareFrames(
     video1Path,
     video2Path,
-    similarityThreshold
+    similarityThreshold,
+    diffDir
   );
 
-  // Check if both videos have audio streams
   const hasAudio1 = info1.streams.some(
     (stream) => stream.codec_type === 'audio'
   );
@@ -114,17 +99,14 @@ export async function compareVideos(
 
   let audioMismatch = 0;
   if (hasAudio1 && hasAudio2) {
-    // Compare audio tracks only if both videos have audio
     audioMismatch = await compareAudio(
       video1Path,
       video2Path,
       similarityThreshold
     );
   } else if (hasAudio1 !== hasAudio2) {
-    // If one video has audio and the other doesn't, consider it a mismatch
     audioMismatch = 1;
   }
-  // If neither video has audio, audioMismatch remains null
 
   return {
     frameMismatchCount,
@@ -132,7 +114,12 @@ export async function compareVideos(
   };
 }
 
-async function compareFrames(video1Path, video2Path, similarityThreshold) {
+async function compareFrames(
+  video1Path,
+  video2Path,
+  similarityThreshold,
+  diffDir
+) {
   let mismatchCount = 0;
   const tempFolder = tmp.dirSync();
   const tempDir = tempFolder.name;
@@ -177,17 +164,17 @@ async function compareFrames(video1Path, video2Path, similarityThreshold) {
         { threshold: 0.1 }
       );
 
-      // Ensure diff directory exists
-      await fs.mkdir('./diff', { recursive: true });
-
       const mismatchPercentage =
         Math.sqrt(mismatchedPixels / (width * height)) * 100;
 
       if (mismatchPercentage > 100 - similarityThreshold) {
-        // Convert PNG object to buffer and save
-        const diffBuffer = PNG.sync.write(diff);
-        await fs.writeFile(`./diff/frame1_${i}.png`, diffBuffer);
         mismatchCount++;
+
+        if (diffDir) {
+          await fs.mkdir(diffDir, { recursive: true });
+          const diffBuffer = PNG.sync.write(diff);
+          await fs.writeFile(`${diffDir}/frame_${i}.png`, diffBuffer);
+        }
       }
     }
   } finally {

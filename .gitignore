@@ -14,3 +14,4 @@ out.mp4
 tmp
 .env
 *-current.mp4
+test/output

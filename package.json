@@ -5,7 +5,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "npm run build && ava --timeout=5m --concurrency=1 test/test.mjs video-test/test.mjs",
+    "test": "npm run build && ava --timeout=30s --concurrency=2 test/static/static.test.mjs",
+    "test:video": "npm run build && ava --timeout=5m --concurrency=1 test/video/video.test.mjs",
+    "test:all": "npm run build && ava --timeout=5m --concurrency=1 test/static/static.test.mjs test/video/video.test.mjs",
     "build": "rm -rf ./dist && npx vite build ./client/ --base=./ --outDir ../dist",
     "dev": "vite ./client.html"
   },

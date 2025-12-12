@@ -265,7 +265,7 @@ module.exports.jsonToVideo = async function jsonToVideo(
             const skipImageError = isImageError && attrs.skipImageError;
 
             if (!skipError && !skipImageError) {
-              throw new Error(error);
+              throw new Error('Asset loading error: ' + error);
             }
           }
           // TODO: add error handling!!!!

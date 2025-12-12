@@ -106,6 +106,57 @@ module.exports.createInstance = async ({
     ? null
     : await module.exports.createPage(browser, visitPage, requestInterceptor);
 
+  async function ensureAssetErrorHelpers(page) {
+    await page.evaluate(() => {
+      // Define helpers once per page. They unify asset-loading error handling
+      // across all exports (dataURL/image/pdf/video).
+      if (!window.__polotnoConsumeAssetError) {
+        window.__polotnoConsumeAssetError = (attrs) => {
+          const error = window._polotnoError;
+          if (!error) return null;
+
+          // Clear immediately to avoid double-reporting.
+          window._polotnoError = null;
+
+          const message = String(error);
+          const isFontError = message.indexOf('Timeout for loading font') >= 0;
+          const skipFontError = isFontError && attrs && attrs.skipFontError;
+
+          const isImageError = message.indexOf('image ') >= 0;
+          const skipImageError = isImageError && attrs && attrs.skipImageError;
+
+          if (skipFontError || skipImageError) {
+            return null;
+          }
+          return message;
+        };
+      }
+
+      if (!window.__polotnoThrowAssetErrorIfAny) {
+        window.__polotnoThrowAssetErrorIfAny = (attrs) => {
+          const message = window.__polotnoConsumeAssetError(attrs);
+          if (message) {
+            throw new Error('Asset loading error: ' + message);
+          }
+        };
+      }
+    });
+  }
+
+  async function consumeAssetLoadingErrorMessage(page, attrs) {
+    try {
+      return await page.evaluate((attrs) => {
+        if (window.__polotnoConsumeAssetError) {
+          return window.__polotnoConsumeAssetError(attrs);
+        }
+        return null;
+      }, attrs);
+    } catch (e) {
+      // If the page is already crashed/unavailable, we can't inspect the error.
+      return null;
+    }
+  }
+
   const run = async (func, ...args) => {
     const page = useParallelPages
       ? await module.exports.createPage(browser, visitPage, requestInterceptor)
@@ -203,23 +254,14 @@ module.exports.createInstance = async ({
           );
         }
       });
+      await ensureAssetErrorHelpers(page);
       const result = await page.evaluate(func, ...args);
-      const error = await page.evaluate(() => window._polotnoError);
-      if (error) {
-        // clear error
-        await page.evaluate(() => {
-          window._polotnoError = null;
-        });
-        const message = error.toString();
-        const isFontError = message.indexOf('Timeout for loading font') >= 0;
-        const skipError = isFontError && args[1]?.skipFontError;
-
-        const isImageError = message.indexOf('image ') >= 0;
-        const skipImageError = isImageError && args[1]?.skipImageError;
-
-        if (!skipError && !skipImageError) {
-          throw new Error('Asset loading error: ' + error);
-        }
+      const assetErrorMessage = await consumeAssetLoadingErrorMessage(
+        page,
+        args[1]
+      );
+      if (assetErrorMessage) {
+        throw new Error('Asset loading error: ' + assetErrorMessage);
       }
       // remove busy page
       busyPages.splice(busyPages.indexOf(page), 1);
@@ -228,10 +270,19 @@ module.exports.createInstance = async ({
       }
       return result;
     } catch (e) {
+      // If `page.evaluate()` failed (e.g. thrown during onProgress), still prefer
+      // a captured Polotno asset-loading error when available.
+      const assetErrorMessage = await consumeAssetLoadingErrorMessage(
+        page,
+        args[1]
+      );
       // remove busy page
       busyPages.splice(busyPages.indexOf(page), 1);
       if (useParallelPages) {
         await page.close();
+      }
+      if (assetErrorMessage) {
+        throw new Error('Asset loading error: ' + assetErrorMessage);
       }
       throw e;
     }
@@ -310,14 +361,12 @@ module.exports.createInstance = async ({
         const pixelRatio = attrs.pixelRatio || 1;
         store.loadJSON(json);
         await store.waitLoading();
+        if (window.__polotnoThrowAssetErrorIfAny) {
+          window.__polotnoThrowAssetErrorIfAny(attrs);
+        }
         // keep store internals consistent with image/pdf exports
         if (store.setElementsPixelRatio) {
           store.setElementsPixelRatio(pixelRatio);
-        }
-
-        // fail fast if we already captured an asset-loading error
-        if (window._polotnoError) {
-          throw new Error(String(window._polotnoError));
         }
 
         // loop through all pages and wait for loading for all layout calculations
@@ -325,13 +374,16 @@ module.exports.createInstance = async ({
         for (const page of store.pages) {
           store.selectPage(page.id);
           await store.waitLoading();
-          if (window._polotnoError) {
-            throw new Error(String(window._polotnoError));
+          if (window.__polotnoThrowAssetErrorIfAny) {
+            window.__polotnoThrowAssetErrorIfAny(attrs);
           }
         }
         if (store.pages.length > 0) {
           store.selectPage(store.pages[0].id);
           await store.waitLoading();
+          if (window.__polotnoThrowAssetErrorIfAny) {
+            window.__polotnoThrowAssetErrorIfAny(attrs);
+          }
         }
 
         //
@@ -348,9 +400,10 @@ module.exports.createInstance = async ({
         // Use exposed progress callback if available
         const progressCallback = window.onProgress
           ? (progress, frameTime) => {
-              // abort export ASAP on captured asset errors
-              if (window._polotnoError) {
-                throw new Error(String(window._polotnoError));
+              // If Polotno captured an asset-loading error during render, apply the
+              // same skip/wrap behavior as `run()`.
+              if (window.__polotnoThrowAssetErrorIfAny) {
+                window.__polotnoThrowAssetErrorIfAny(attrs);
               }
               return window.onProgress(progress, frameTime);
             }
