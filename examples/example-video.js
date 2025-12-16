@@ -1,18 +1,20 @@
 const fs = require('fs');
 const { createInstance } = require('../index.js');
-const { jsonToVideo } = require('../video.js');
+
+const { config } = require('dotenv');
+config();
 
 async function run() {
   // create working instance
   const instance = await createInstance({
-    key: 'nFA5H9elEytDyPyvKL7T',
+    key: process.env.POLOTNO_KEY,
   });
 
   // load sample json
   const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
-  const page = await instance.createPage();
+  const base64 = await instance.jsonToVideoBase64(json);
 
-  await jsonToVideo(page, json, { out: 'out.mp4' });
+  fs.writeFileSync('out.mp4', base64, 'base64');
 
   await instance.close();
   process.exit(0);

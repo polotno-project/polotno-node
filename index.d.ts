@@ -29,7 +29,6 @@ declare module 'polotno-node' {
   }
 
   export interface VideoRenderOptions extends RenderOptions {
-    out: string;
     fps?: number;
     pixelRatio?: number;
     onProgress?: (progress: number, frameTime?: number) => void;
@@ -92,9 +91,13 @@ declare module 'polotno-node' {
       json: RenderJSON,
       options?: RenderOptions
     ) => Promise<string>;
-    jsonToVideo: (
+    jsonToVideoDataURL: (
       json: RenderJSON,
-      options: VideoRenderOptions
+      options?: VideoRenderOptions
+    ) => Promise<string>;
+    jsonToVideoBase64: (
+      json: RenderJSON,
+      options?: VideoRenderOptions
     ) => Promise<string>;
     createPage: () => Promise<Page>;
   }

@@ -1,5 +1,4 @@
 const path = require('path');
-const fs = require('fs');
 const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
 
 module.exports.createPage = async (browser, url, requestInterceptor) => {
@@ -351,19 +350,14 @@ module.exports.createInstance = async ({
     return blob;
   };
 
-  const jsonToVideo = async (json, attrs) => {
-    if (!attrs || !attrs.out) {
-      throw new Error('jsonToVideo requires attrs.out to be specified');
-    }
-
-    const dataURL = await run(
+  const jsonToVideoDataURL = async (json, attrs) => {
+    return await run(
       async (json, attrs) => {
         const pixelRatio = attrs.pixelRatio || 1;
         store.loadJSON(json);
         await store.waitLoading();
-        if (window.__polotnoThrowAssetErrorIfAny) {
-          window.__polotnoThrowAssetErrorIfAny(attrs);
-        }
+        window.__polotnoThrowAssetErrorIfAny(attrs);
+
         // keep store internals consistent with image/pdf exports
         if (store.setElementsPixelRatio) {
           store.setElementsPixelRatio(pixelRatio);
@@ -374,19 +368,16 @@ module.exports.createInstance = async ({
         for (const page of store.pages) {
           store.selectPage(page.id);
           await store.waitLoading();
-          if (window.__polotnoThrowAssetErrorIfAny) {
-            window.__polotnoThrowAssetErrorIfAny(attrs);
-          }
+          window.__polotnoThrowAssetErrorIfAny(attrs);
         }
         if (store.pages.length > 0) {
           store.selectPage(store.pages[0].id);
           await store.waitLoading();
-          if (window.__polotnoThrowAssetErrorIfAny) {
-            window.__polotnoThrowAssetErrorIfAny(attrs);
-          }
+          window.__polotnoThrowAssetErrorIfAny(attrs);
         }
 
-        //
+        // For video export, we always use 'resize' text overflow mode
+        // to ensure text fits properly in animations. User preferences are ignored for now.
         window.config.setTextOverflow('resize');
 
         if (!window.loadVideoExportModule) {
@@ -400,11 +391,8 @@ module.exports.createInstance = async ({
         // Use exposed progress callback if available
         const progressCallback = window.onProgress
           ? (progress, frameTime) => {
-              // If Polotno captured an asset-loading error during render, apply the
-              // same skip/wrap behavior as `run()`.
-              if (window.__polotnoThrowAssetErrorIfAny) {
-                window.__polotnoThrowAssetErrorIfAny(attrs);
-              }
+              // Check for asset-loading errors during render
+              window.__polotnoThrowAssetErrorIfAny(attrs);
               return window.onProgress(progress, frameTime);
             }
           : undefined;
@@ -416,7 +404,7 @@ module.exports.createInstance = async ({
           onProgress: progressCallback,
         });
 
-        // Convert Blob to data URL (so Node can write it)
+        // Convert Blob to data URL
         const dataUrl = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
@@ -428,17 +416,11 @@ module.exports.createInstance = async ({
       json,
       attrs || {}
     );
+  };
 
-    // Extract base64 data and write to file
-    const base64Data = dataURL.split('base64,')[1];
-    if (!base64Data) {
-      throw new Error('Invalid video data URL returned from client');
-    }
-
-    const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(attrs.out, buffer);
-
-    return attrs.out;
+  const jsonToVideoBase64 = async (json, attrs) => {
+    const url = await jsonToVideoDataURL(json, attrs);
+    return url.split('base64,')[1];
   };
 
   const instance = {
@@ -456,7 +438,8 @@ module.exports.createInstance = async ({
     jsonToBlob,
     jsonToGIFDataURL,
     jsonToGIFBase64,
-    jsonToVideo,
+    jsonToVideoDataURL,
+    jsonToVideoBase64,
     createPage: async () =>
       await module.exports.createPage(browser, visitPage, requestInterceptor),
   };

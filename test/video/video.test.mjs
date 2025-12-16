@@ -54,13 +54,14 @@ async function snapshot(name, options = {}) {
   try {
     const json = JSON.parse(fs.readFileSync(jsonPath));
 
-    await instance.jsonToVideo(json, {
-      out: currentPath,
+    const base64 = await instance.jsonToVideoBase64(json, {
       fps: options.fps ?? 5,
       pixelRatio: options.pixelRatio ?? 1,
       textVerticalResizeEnabled: options.textVerticalResizeEnabled ?? false,
       onProgress: options.onProgress,
     });
+
+    fs.writeFileSync(currentPath, Buffer.from(base64, 'base64'));
 
     if (!fs.existsSync(goldenPath)) {
       fs.copyFileSync(currentPath, goldenPath);

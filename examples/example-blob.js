@@ -1,13 +1,13 @@
 const fs = require('fs');
 const { createInstance } = require('../index.js');
 
+const { config } = require('dotenv');
+config();
+
 async function run() {
   // create working instance
   const instance = await createInstance({
-    // this is a demo key just for that project
-    // (!) please don't use it in your projects
-    // to create your own API key please go here: https://polotno.dev/cabinet
-    key: 'nFA5H9elEytDyPyvKL7T',
+    key: process.env.POLOTNO_KEY,
   });
 
   // load sample json

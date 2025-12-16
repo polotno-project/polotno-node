@@ -15,9 +15,10 @@ async function run() {
 
   const base64 = await instance.jsonToImageBase64(json, {
     textOverflow: 'resize',
+    mimeType: 'image/jpeg',
   });
 
-  fs.writeFileSync('out.png', base64, 'base64');
+  fs.writeFileSync('out.jpeg', base64, 'base64');
 
   await instance.close();
 }

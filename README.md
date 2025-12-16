@@ -204,6 +204,37 @@ const base64 = await instance.jsonToGIFBase64(json);
 fs.writeFileSync('out.gif', base64, 'base64');
 ```
 
+### `instance.jsonToVideoDataURL(json, attrs)`
+
+Export json into data URL of MP4 video file with animations.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const url = await instance.jsonToVideoDataURL(json, {
+  fps: 30,
+  pixelRatio: 1,
+  onProgress: (progress, frameTime) => {
+    console.log(`Progress: ${progress}%`);
+  },
+});
+res.json({ url });
+```
+
+### `instance.jsonToVideoBase64(json, attrs)`
+
+Export json into base64 string of MP4 video file with animations.
+
+```js
+const json = JSON.parse(fs.readFileSync('polotno.json'));
+
+const base64 = await instance.jsonToVideoBase64(json, {
+  fps: 30,
+  pixelRatio: 1,
+});
+fs.writeFileSync('out.mp4', base64, 'base64');
+```
+
 ### `attrs` usage
 
 **NOTE: all export API will pass `attrs` object into relevant export function from `store`.**
