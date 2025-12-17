@@ -11,36 +11,21 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
-
-  // duplicate pages multiple times
-  const originalPages = json.pages;
-  const numCopies = 20; // adjust number of copies as needed
-
-  json.pages = [];
-  for (let i = 0; i < numCopies; i++) {
-    // clone pages and update IDs
-    const duplicatedPages = originalPages.map((page) => ({
-      ...page,
-      id: `${page.id}-copy-${i}`,
-    }));
-    json.pages.push(...duplicatedPages);
-  }
-
-  fs.writeFileSync('out-large.json', JSON.stringify(json, null, 2));
-
-  console.log('here');
-
-  const base64 = await instance.jsonToPDFBase64(json, {
-    onProgress: (progress) => {
-      console.log('progress', progress);
+  const json = JSON.parse(fs.readFileSync('./test-data/medium-video.json'));
+  console.time('rendering');
+  const base64 = await instance.jsonToVideoBase64(json, {
+    onProgress: (progress, frameTime) => {
+      console.log('progress', progress, frameTime);
     },
-    // htmlTextRenderEnabled: true,
+    fps: 30,
+    // profilePath: 'video-profile.cpuprofile',
   });
 
-  fs.writeFileSync('out.pdf', base64, 'base64');
+  fs.writeFileSync('out.mp4', base64, 'base64');
+  console.timeEnd('rendering');
 
   await instance.close();
+  process.exit(0);
 }
 
-run();
+run().catch((e) => console.error(e));

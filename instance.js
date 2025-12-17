@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
 
 module.exports.createPage = async (browser, url, requestInterceptor) => {
@@ -169,6 +170,16 @@ module.exports.createInstance = async ({
 
     busyPages.push(page);
 
+    // Setup profiling if profilePath is provided
+    let cdpSession = null;
+    const profilePath = args[1]?.profilePath;
+    console.log('profilePath', profilePath);
+    if (profilePath) {
+      cdpSession = await page.target().createCDPSession();
+      await cdpSession.send('Profiler.enable');
+      await cdpSession.send('Profiler.start');
+    }
+
     try {
       if (args[1]?.assetLoadTimeout) {
         await page.evaluate((timeout) => {
@@ -255,6 +266,14 @@ module.exports.createInstance = async ({
       });
       await ensureAssetErrorHelpers(page);
       const result = await page.evaluate(func, ...args);
+
+      // Stop profiler and save profile if enabled
+      if (cdpSession && profilePath) {
+        const { profile } = await cdpSession.send('Profiler.stop');
+        fs.writeFileSync(profilePath, JSON.stringify(profile));
+        console.log(`CPU profile saved to: ${profilePath}`);
+      }
+
       const assetErrorMessage = await consumeAssetLoadingErrorMessage(
         page,
         args[1]
@@ -269,6 +288,18 @@ module.exports.createInstance = async ({
       }
       return result;
     } catch (e) {
+      // Stop profiler and save profile even on error
+      if (cdpSession && profilePath) {
+        console.log('saving profile');
+        try {
+          const { profile } = await cdpSession.send('Profiler.stop');
+          fs.writeFileSync(profilePath, JSON.stringify(profile));
+          console.log(`CPU profile saved to: ${profilePath}`);
+        } catch (profileError) {
+          console.error('Failed to save profile:', profileError.message);
+        }
+      }
+
       // If `page.evaluate()` failed (e.g. thrown during onProgress), still prefer
       // a captured Polotno asset-loading error when available.
       const assetErrorMessage = await consumeAssetLoadingErrorMessage(
@@ -359,9 +390,7 @@ module.exports.createInstance = async ({
         window.__polotnoThrowAssetErrorIfAny(attrs);
 
         // keep store internals consistent with image/pdf exports
-        if (store.setElementsPixelRatio) {
-          store.setElementsPixelRatio(pixelRatio);
-        }
+        store.setElementsPixelRatio(pixelRatio);
 
         // loop through all pages and wait for loading for all layout calculations
         // (this helps stabilize text/layout across multi-page designs)

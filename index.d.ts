@@ -18,6 +18,8 @@ declare module 'polotno-node' {
     mimeType?: string;
     pageId?: string;
     onProgress?: (progress: number) => void;
+    /** Path to save CPU profile (.cpuprofile) - loadable in Chrome DevTools */
+    profilePath?: string;
   }
 
   export interface PDFRenderOptions extends RenderOptions {
