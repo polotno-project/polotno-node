@@ -173,7 +173,6 @@ module.exports.createInstance = async ({
     // Setup profiling if profilePath is provided
     let cdpSession = null;
     const profilePath = args[1]?.profilePath;
-    console.log('profilePath', profilePath);
     if (profilePath) {
       cdpSession = await page.target().createCDPSession();
       await cdpSession.send('Profiler.enable');
