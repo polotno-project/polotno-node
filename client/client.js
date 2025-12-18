@@ -13,12 +13,16 @@ import { setTextVerticalResizeEnabled } from 'polotno/utils/flags';
 import { onLoadError } from 'polotno/utils/loader';
 import { setAssetLoadTimeout, setFontLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
-
+import { Node } from 'konva/lib/Node';
 import { jsPDF } from 'jspdf';
 
 // bundle jspdf into window object
 // so client will not need to load it from CDN
 window.jspdf = { jsPDF };
+
+// on any changes in polotno workspace (and internal konva nddes), re-render is automatically triggered in Konva internals
+// but we don't need to that on the server side, because actual render will be done once on canvas  export
+Node.prototype._requestDraw = () => {};
 
 toggleFadeInAnimation(false);
 setTextOverflow('change-font-size');
