@@ -241,6 +241,12 @@ module.exports.createInstance = async ({
           originalProgress(progress, frameTime);
         });
       }
+      // Allow exposing custom functions (used for chunked data transfer)
+      if (args[1]?.exposeFunctions) {
+        for (const [name, fn] of Object.entries(args[1].exposeFunctions)) {
+          await page.exposeFunction(name, fn);
+        }
+      }
       if (args[1]?.textOverflow) {
         await page.evaluate((overflow) => {
           if (window.config && window.config.setTextOverflow) {
@@ -381,7 +387,8 @@ module.exports.createInstance = async ({
   };
 
   const jsonToVideoDataURL = async (json, attrs) => {
-    return await run(
+    const chunks = [];
+    const mimeType = await run(
       async (json, attrs) => {
         const pixelRatio = attrs.pixelRatio || 1;
         store.loadJSON(json);
@@ -432,18 +439,32 @@ module.exports.createInstance = async ({
           onProgress: progressCallback,
         });
 
-        // Convert Blob to data URL
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(videoBlob);
-        });
-        return dataUrl;
+        // Stream blob in chunks (5MB each) via exposed function to avoid large payload issues
+        const CHUNK_SIZE = 5 * 1024 * 1024;
+        const arrayBuffer = await videoBlob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+
+        for (let offset = 0; offset < uint8Array.length; offset += CHUNK_SIZE) {
+          const end = Math.min(offset + CHUNK_SIZE, uint8Array.length);
+          const chunk = uint8Array.slice(offset, end);
+          let binary = '';
+          for (let i = 0; i < chunk.length; i++) {
+            binary += String.fromCharCode(chunk[i]);
+          }
+          await window.__polotnoSendChunk(btoa(binary));
+        }
+
+        return videoBlob.type;
       },
       json,
-      attrs || {}
+      {
+        ...attrs,
+        exposeFunctions: {
+          __polotnoSendChunk: (chunk) => chunks.push(chunk),
+        },
+      }
     );
+    return `data:${mimeType || 'video/mp4'};base64,${chunks.join('')}`;
   };
 
   const jsonToVideoBase64 = async (json, attrs) => {
