@@ -17,7 +17,10 @@ const outputDir = join(testDir, '..', 'output', 'video');
 const currentDir = join(outputDir, 'current');
 const diffDir = join(outputDir, 'diff');
 
-// Ensure output directories exist
+// Clear diff directory and ensure output directories exist
+if (fs.existsSync(diffDir)) {
+  fs.rmSync(diffDir, { recursive: true });
+}
 [outputDir, currentDir, diffDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

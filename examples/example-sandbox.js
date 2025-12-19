@@ -11,14 +11,14 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/medium-video.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
   console.time('rendering');
   const base64 = await instance.jsonToVideoBase64(json, {
     onProgress: (progress, frameTime) => {
       console.log('progress', progress, frameTime);
     },
     fps: 30,
-    // profilePath: 'video-profile.cpuprofile',
+    profilePath: 'video-profile.cpuprofile',
   });
 
   fs.writeFileSync('out.mp4', base64, 'base64');
