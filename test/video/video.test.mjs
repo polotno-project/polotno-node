@@ -124,11 +124,11 @@ const fixtureSpecs = {
   'bad-image': {
     kind: 'throws',
     maxDurationMs: 5000,
-    toThrow: /Asset loading error/,
+    toThrow: /image with id/,
   },
   'manual-bad-video': {
     kind: 'throws',
-    toThrow: /Asset loading error|Video failed to load|video with id/,
+    toThrow: /video with id/,
   },
 };
 

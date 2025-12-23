@@ -17,6 +17,10 @@ const outputDir = join(testDir, '..', 'output', 'static');
 const currentDir = join(outputDir, 'current');
 const diffDir = join(outputDir, 'diff');
 
+// Clear diff directory and ensure output directories exist
+if (fs.existsSync(diffDir)) {
+  fs.rmSync(diffDir, { recursive: true });
+}
 // Ensure output directories exist
 [outputDir, currentDir, diffDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {

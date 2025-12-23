@@ -136,7 +136,7 @@ module.exports.createInstance = async ({
         window.__polotnoThrowAssetErrorIfAny = (attrs) => {
           const message = window.__polotnoConsumeAssetError(attrs);
           if (message) {
-            throw new Error('Asset loading error: ' + message);
+            throw new Error(message);
           }
         };
       }
@@ -284,7 +284,7 @@ module.exports.createInstance = async ({
         args[1]
       );
       if (assetErrorMessage) {
-        throw new Error('Asset loading error: ' + assetErrorMessage);
+        throw new Error(assetErrorMessage);
       }
       // remove busy page
       busyPages.splice(busyPages.indexOf(page), 1);
@@ -317,7 +317,7 @@ module.exports.createInstance = async ({
         await page.close();
       }
       if (assetErrorMessage) {
-        throw new Error('Asset loading error: ' + assetErrorMessage);
+        throw new Error(assetErrorMessage);
       }
       throw e;
     }
@@ -423,21 +423,47 @@ module.exports.createInstance = async ({
 
         const { storeToVideo } = await window.loadVideoExportModule();
 
-        // Use exposed progress callback if available
-        const progressCallback = window.onProgress
-          ? (progress, frameTime) => {
-              // Check for asset-loading errors during render
-              window.__polotnoThrowAssetErrorIfAny(attrs);
-              return window.onProgress(progress, frameTime);
-            }
-          : undefined;
+        // Create abort controller to cancel video render on error
+        const abortController = new AbortController();
+        let capturedError = null;
 
-        const videoBlob = await storeToVideo({
-          store,
-          fps: attrs.fps,
-          pixelRatio,
-          onProgress: progressCallback,
-        });
+        // Always have an internal progress callback to check for errors,
+        // even if user didn't provide onProgress
+        const progressCallback = (progress, frameTime) => {
+          // Check for asset-loading errors during render (without throwing)
+          const errorMessage = window.__polotnoConsumeAssetError(attrs);
+          if (errorMessage) {
+            capturedError = errorMessage;
+            abortController.abort();
+            return;
+          }
+          // Call user's progress callback if provided
+          if (window.onProgress) {
+            window.onProgress(progress, frameTime);
+          }
+        };
+
+        let videoBlob;
+        try {
+          videoBlob = await storeToVideo({
+            store,
+            fps: attrs.fps,
+            pixelRatio,
+            onProgress: progressCallback,
+            signal: abortController.signal,
+          });
+        } catch (e) {
+          // If we aborted due to asset error, throw that instead
+          if (capturedError) {
+            throw new Error(capturedError);
+          }
+          throw e;
+        }
+
+        // Final check for any errors that occurred
+        if (capturedError) {
+          throw new Error(capturedError);
+        }
 
         // Stream blob in chunks (5MB each) via exposed function to avoid large payload issues
         const CHUNK_SIZE = 5 * 1024 * 1024;
