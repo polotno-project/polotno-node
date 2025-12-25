@@ -34,6 +34,12 @@ declare module 'polotno-node' {
     fps?: number;
     pixelRatio?: number;
     onProgress?: (progress: number, frameTime?: number) => void;
+    /**
+     * When using the default local client (no `createInstance({ url })`), polotno-node will
+     * pre-download remote video/audio sources into a temp folder and rewrite them to `file://...`
+     * URLs for more reliable and faster loading. Set `skipDownloads: true` to disable that.
+     */
+    skipDownloads?: boolean;
   }
 
   // JSON Structure for Rendering

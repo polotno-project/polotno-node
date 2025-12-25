@@ -1,6 +1,222 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const crypto = require('crypto');
+const { pathToFileURL } = require('url');
+const { Readable } = require('stream');
+const { pipeline } = require('stream/promises');
 const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
+
+// Walk Polotno nodes recursively (depth-first)
+// cb(node) may return true to stop traversing the current branch early
+const forEveryChild = (node, cb) => {
+  if (!node || !node.children) return;
+  for (const child of node.children) {
+    const shouldStop = cb(child);
+    if (shouldStop === true) {
+      break;
+    }
+    forEveryChild(child, cb);
+  }
+};
+
+// Collect pointers to all media objects that can have `src` rewritten.
+// Returned entries look like: { kind: 'video'|'audio', target: <object>, key: 'src' }
+const collectMediaSourcePointers = (json) => {
+  const pointers = [];
+
+  // videos in elements tree
+  for (const page of json?.pages || []) {
+    for (const el of page?.children || []) {
+      if (el?.type === 'video' && typeof el.src === 'string') {
+        pointers.push({ kind: 'video', target: el, key: 'src' });
+      }
+      forEveryChild(el, (child) => {
+        if (child?.type === 'video' && typeof child.src === 'string') {
+          pointers.push({ kind: 'video', target: child, key: 'src' });
+        }
+      });
+    }
+  }
+
+  // audios array
+  for (const audio of json?.audios || []) {
+    if (audio && typeof audio.src === 'string') {
+      pointers.push({ kind: 'audio', target: audio, key: 'src' });
+    }
+  }
+
+  return pointers;
+};
+
+const isDataOrFileSrc = (src) => {
+  if (typeof src !== 'string') return true;
+  return (
+    src.startsWith('data:') ||
+    src.startsWith('file:') ||
+    src.startsWith('blob:')
+  );
+};
+
+const guessExtension = (urlString, contentType) => {
+  try {
+    const u = new URL(urlString);
+    const ext = path.extname(u.pathname || '');
+    if (ext) return ext;
+  } catch (e) {
+    // ignore; fallback to content-type
+  }
+
+  const ct = String(contentType || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  const map = {
+    'video/mp4': '.mp4',
+    'video/webm': '.webm',
+    'video/quicktime': '.mov',
+    'audio/mpeg': '.mp3',
+    'audio/mp4': '.m4a',
+    'audio/wav': '.wav',
+    'audio/x-wav': '.wav',
+    'audio/ogg': '.ogg',
+    'audio/webm': '.webm',
+  };
+  return map[ct] || '.bin';
+};
+
+const downloadUrlToFile = async (urlString, destinationPath) => {
+  if (typeof fetch !== 'function') {
+    throw new Error(
+      'Global fetch API is not available in this Node.js runtime. Please use Node 18+.'
+    );
+  }
+  const MAX_ATTEMPTS = 3;
+  const BASE_DELAY_MS = 300;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      // Ensure no partial file exists from previous attempts
+      await fs.promises.rm(destinationPath, { force: true });
+
+      const res = await fetch(urlString);
+      if (!res.ok) {
+        // Best-effort read of error body (small) for debugging.
+        let bodyPreview = '';
+        try {
+          bodyPreview = await res.text();
+          if (bodyPreview.length > 500) {
+            bodyPreview = bodyPreview.slice(0, 500) + '...';
+          }
+        } catch (e) {
+          // ignore
+        }
+        const details = [
+          `${res.status} ${res.statusText}`.trim(),
+          bodyPreview ? `body: ${JSON.stringify(bodyPreview)}` : null,
+        ]
+          .filter(Boolean)
+          .join(', ');
+
+        throw new Error(`HTTP error while downloading: ${details}`);
+      }
+      if (!res.body) {
+        throw new Error('Empty response body');
+      }
+
+      await pipeline(
+        Readable.fromWeb(res.body),
+        fs.createWriteStream(destinationPath)
+      );
+
+      return res.headers.get('content-type') || '';
+    } catch (e) {
+      lastError = e;
+      if (attempt < MAX_ATTEMPTS) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+    }
+  }
+
+  const message =
+    lastError && lastError.message ? lastError.message : String(lastError);
+  throw new Error(
+    `Failed to download media after ${MAX_ATTEMPTS} attempts: ${urlString}\nLast error: ${message}`
+  );
+};
+
+const prepareLocalMediaForVideoExport = async (json) => {
+  const clonedJson = JSON.parse(JSON.stringify(json));
+  const pointers = collectMediaSourcePointers(clonedJson);
+
+  // Map original URL -> file://... URL
+  const rewriteMap = new Map();
+  const urlsToDownload = [];
+
+  for (const p of pointers) {
+    const src = p.target[p.key];
+    if (isDataOrFileSrc(src)) continue;
+    // Only download http/https sources (everything else is skipped)
+    try {
+      const u = new URL(src);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') continue;
+    } catch (e) {
+      continue;
+    }
+    if (!rewriteMap.has(src)) {
+      rewriteMap.set(src, null);
+      urlsToDownload.push(src);
+    }
+  }
+
+  if (urlsToDownload.length === 0) {
+    return { json: clonedJson, cleanup: async () => {} };
+  }
+
+  const tempDir = await fs.promises.mkdtemp(
+    path.join(os.tmpdir(), 'polotno-node-assets-')
+  );
+
+  let didCleanup = false;
+  const cleanup = async () => {
+    if (didCleanup) return;
+    didCleanup = true;
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
+  };
+
+  try {
+    for (const src of urlsToDownload) {
+      const tmpBase = crypto.randomUUID
+        ? crypto.randomUUID()
+        : crypto.randomBytes(16).toString('hex');
+      // First download to a temp file without extension to know content-type
+      const tmpPath = path.join(tempDir, tmpBase);
+      const contentType = await downloadUrlToFile(src, tmpPath);
+      const ext = guessExtension(src, contentType);
+      const finalPath = tmpPath + ext;
+      // rename for nicer file URLs and better sniffing
+      await fs.promises.rename(tmpPath, finalPath);
+      rewriteMap.set(src, pathToFileURL(finalPath).toString());
+    }
+
+    // Apply rewrites
+    for (const p of pointers) {
+      const src = p.target[p.key];
+      const replacement = rewriteMap.get(src);
+      if (replacement) {
+        p.target[p.key] = replacement;
+      }
+    }
+
+    return { json: clonedJson, cleanup };
+  } catch (e) {
+    await cleanup();
+    throw e;
+  }
+};
 
 module.exports.createPage = async (browser, url, requestInterceptor) => {
   const page = await browser.newPage();
@@ -102,6 +318,7 @@ module.exports.createInstance = async ({
   requestInterceptor,
 } = {}) => {
   const visitPage = url || `${DEFAULT_CLIENT}?key=${key}`;
+  const hasCustomClientUrl = Boolean(url);
   const firstPage = useParallelPages
     ? null
     : await module.exports.createPage(browser, visitPage, requestInterceptor);
@@ -388,109 +605,124 @@ module.exports.createInstance = async ({
 
   const jsonToVideoDataURL = async (json, attrs) => {
     const chunks = [];
-    const mimeType = await run(
-      async (json, attrs) => {
-        const pixelRatio = attrs.pixelRatio || 1;
-        store.loadJSON(json);
-        await store.waitLoading();
-        window.__polotnoThrowAssetErrorIfAny(attrs);
+    const shouldDownloadMedia =
+      !hasCustomClientUrl && !(attrs && attrs.skipDownloads);
 
-        // keep store internals consistent with image/pdf exports
-        store.setElementsPixelRatio(pixelRatio);
+    const prepared = shouldDownloadMedia
+      ? await prepareLocalMediaForVideoExport(json)
+      : { json, cleanup: async () => {} };
 
-        // loop through all pages and wait for loading for all layout calculations
-        // (this helps stabilize text/layout across multi-page designs)
-        for (const page of store.pages) {
-          store.selectPage(page.id);
+    try {
+      const mimeType = await run(
+        async (json, attrs) => {
+          const pixelRatio = attrs.pixelRatio || 1;
+          store.loadJSON(json);
           await store.waitLoading();
           window.__polotnoThrowAssetErrorIfAny(attrs);
-        }
-        if (store.pages.length > 0) {
-          store.selectPage(store.pages[0].id);
-          await store.waitLoading();
-          window.__polotnoThrowAssetErrorIfAny(attrs);
-        }
 
-        // For video export, we always use 'resize' text overflow mode
-        // to ensure text fits properly in animations. User preferences are ignored for now.
-        window.config.setTextOverflow('resize');
+          // keep store internals consistent with image/pdf exports
+          store.setElementsPixelRatio(pixelRatio);
 
-        if (!window.loadVideoExportModule) {
-          throw new Error(
-            'Video export module loader is not defined in the client. Expected window.loadVideoExportModule().'
-          );
-        }
-
-        const { storeToVideo } = await window.loadVideoExportModule();
-
-        // Create abort controller to cancel video render on error
-        const abortController = new AbortController();
-        let capturedError = null;
-
-        // Always have an internal progress callback to check for errors,
-        // even if user didn't provide onProgress
-        const progressCallback = (progress, frameTime) => {
-          // Check for asset-loading errors during render (without throwing)
-          const errorMessage = window.__polotnoConsumeAssetError(attrs);
-          if (errorMessage) {
-            capturedError = errorMessage;
-            abortController.abort();
-            return;
+          // loop through all pages and wait for loading for all layout calculations
+          // (this helps stabilize text/layout across multi-page designs)
+          for (const page of store.pages) {
+            store.selectPage(page.id);
+            await store.waitLoading();
+            window.__polotnoThrowAssetErrorIfAny(attrs);
           }
-          // Call user's progress callback if provided
-          if (window.onProgress) {
-            window.onProgress(progress, frameTime);
+          if (store.pages.length > 0) {
+            store.selectPage(store.pages[0].id);
+            await store.waitLoading();
+            window.__polotnoThrowAssetErrorIfAny(attrs);
           }
-        };
 
-        let videoBlob;
-        try {
-          videoBlob = await storeToVideo({
-            store,
-            fps: attrs.fps,
-            pixelRatio,
-            onProgress: progressCallback,
-            signal: abortController.signal,
-          });
-        } catch (e) {
-          // If we aborted due to asset error, throw that instead
+          // For video export, we always use 'resize' text overflow mode
+          // to ensure text fits properly in animations. User preferences are ignored for now.
+          window.config.setTextOverflow('resize');
+
+          if (!window.loadVideoExportModule) {
+            throw new Error(
+              'Video export module loader is not defined in the client. Expected window.loadVideoExportModule().'
+            );
+          }
+
+          const { storeToVideo } = await window.loadVideoExportModule();
+
+          // Create abort controller to cancel video render on error
+          const abortController = new AbortController();
+          let capturedError = null;
+
+          // Always have an internal progress callback to check for errors,
+          // even if user didn't provide onProgress
+          const progressCallback = (progress, frameTime) => {
+            // Check for asset-loading errors during render (without throwing)
+            const errorMessage = window.__polotnoConsumeAssetError(attrs);
+            if (errorMessage) {
+              capturedError = errorMessage;
+              abortController.abort();
+              return;
+            }
+            // Call user's progress callback if provided
+            if (window.onProgress) {
+              window.onProgress(progress, frameTime);
+            }
+          };
+
+          let videoBlob;
+          try {
+            videoBlob = await storeToVideo({
+              store,
+              fps: attrs.fps,
+              pixelRatio,
+              onProgress: progressCallback,
+              signal: abortController.signal,
+            });
+          } catch (e) {
+            // If we aborted due to asset error, throw that instead
+            if (capturedError) {
+              throw new Error(capturedError);
+            }
+            throw e;
+          }
+
+          // Final check for any errors that occurred
           if (capturedError) {
             throw new Error(capturedError);
           }
-          throw e;
-        }
 
-        // Final check for any errors that occurred
-        if (capturedError) {
-          throw new Error(capturedError);
-        }
+          // Stream blob in chunks (5MB each) via exposed function to avoid large payload issues
+          const CHUNK_SIZE = 5 * 1024 * 1024;
+          const arrayBuffer = await videoBlob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
 
-        // Stream blob in chunks (5MB each) via exposed function to avoid large payload issues
-        const CHUNK_SIZE = 5 * 1024 * 1024;
-        const arrayBuffer = await videoBlob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-
-        for (let offset = 0; offset < uint8Array.length; offset += CHUNK_SIZE) {
-          const end = Math.min(offset + CHUNK_SIZE, uint8Array.length);
-          const chunk = uint8Array.slice(offset, end);
-          let binary = '';
-          for (let i = 0; i < chunk.length; i++) {
-            binary += String.fromCharCode(chunk[i]);
+          for (
+            let offset = 0;
+            offset < uint8Array.length;
+            offset += CHUNK_SIZE
+          ) {
+            const end = Math.min(offset + CHUNK_SIZE, uint8Array.length);
+            const chunk = uint8Array.slice(offset, end);
+            let binary = '';
+            for (let i = 0; i < chunk.length; i++) {
+              binary += String.fromCharCode(chunk[i]);
+            }
+            await window.__polotnoSendChunk(btoa(binary));
           }
-          await window.__polotnoSendChunk(btoa(binary));
-        }
 
-        return videoBlob.type;
-      },
-      json,
-      {
-        ...attrs,
-        exposeFunctions: {
-          __polotnoSendChunk: (chunk) => chunks.push(chunk),
+          return videoBlob.type;
         },
-      }
-    );
-    return `data:${mimeType || 'video/mp4'};base64,${chunks.join('')}`;
+        prepared.json,
+        {
+          ...attrs,
+          exposeFunctions: {
+            __polotnoSendChunk: (chunk) => chunks.push(chunk),
+          },
+        }
+      );
+      return `data:${mimeType || 'video/mp4'};base64,${chunks.join('')}`;
+    } finally {
+      await prepared.cleanup();
+    }
   };
 
   const jsonToVideoBase64 = async (json, attrs) => {

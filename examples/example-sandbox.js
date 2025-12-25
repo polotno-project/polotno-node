@@ -18,7 +18,7 @@ async function run() {
       console.log('progress', progress, frameTime);
     },
     fps: 30,
-    profilePath: 'video-profile.cpuprofile',
+    // profilePath: 'video-profile.cpuprofile',
   });
 
   fs.writeFileSync('out.mp4', base64, 'base64');

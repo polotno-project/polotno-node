@@ -245,6 +245,22 @@ const url = await instance.jsonToDataURL(json, { pixelRatio: 0.2 });
 // const url = await store.toDataURL({ pixelRatio: 0.2 });
 ```
 
+### `attrs.skipDownloads` (video export only)
+
+By default, when exporting video and **only** when using the default local client (i.e. you did **not** pass `createInstance({ url })`), `polotno-node` will:
+
+- Download all **remote** video elements (`type: 'video'`) and `json.audios` sources into a temporary folder
+- Deduplicate downloads (same URL is downloaded once)
+- Rewrite `src` to `file://...` URLs so Chromium loads media from disk
+
+If you want to disable this behavior, set:
+
+```js
+const url = await instance.jsonToVideoDataURL(json, {
+  skipDownloads: true,
+});
+```
+
 ### `attrs.assetLoadTimeout`
 
 You can add `assetLoadTimeout` attribute to `attrs` object. It will be used to set timeout for loading assets. By default it is 30000ms.

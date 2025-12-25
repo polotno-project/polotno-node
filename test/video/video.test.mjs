@@ -128,7 +128,7 @@ const fixtureSpecs = {
   },
   'manual-bad-video': {
     kind: 'throws',
-    toThrow: /video with id/,
+    toThrow: /Failed to download media/,
   },
 };
 
