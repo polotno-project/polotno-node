@@ -690,8 +690,11 @@ module.exports.createInstance = async ({
             throw new Error(capturedError);
           }
 
-          // Stream blob in chunks (5MB each) via exposed function to avoid large payload issues
-          const CHUNK_SIZE = 5 * 1024 * 1024;
+          // Stream blob in chunks via exposed function to avoid large payload issues.
+          // CRITICAL (!!!): Chunk size MUST be a multiple of 3 bytes because base64 encodes
+          // 3 bytes -> 4 characters. If chunks aren't aligned, each chunk gets padding
+          // (= or ==) at the end, and joining them creates invalid base64 and video may corrupt.
+          const CHUNK_SIZE = 3 * 1024 * 1024; // 3MB, divisible by 3
           const arrayBuffer = await videoBlob.arrayBuffer();
           const uint8Array = new Uint8Array(arrayBuffer);
 
