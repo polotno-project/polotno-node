@@ -1,0 +1,192 @@
+diff --git a/node_modules/mediabunny/dist/modules/src/media-sink.js b/node_modules/mediabunny/dist/modules/src/media-sink.js
+index 63dd357..a30a867 100644
+--- a/node_modules/mediabunny/dist/modules/src/media-sink.js
++++ b/node_modules/mediabunny/dist/modules/src/media-sink.js
+@@ -972,117 +972,86 @@ class VideoDecoderWrapper extends DecoderWrapper {
+         this.sampleQueue.length = 0;
+     }
+ }
+-/** Utility class that merges together color and alpha information using simple WebGL 2 shaders. */
++/** Utility class that merges together color and alpha information using 2D Canvas. */
+ class ColorAlphaMerger {
++    w = 0;
++    h = 0;
++    // Reusable ImageData to avoid allocations
++    colorImageData = null;
++    alphaImageData = null;
++
+     constructor() {
+-        // Canvas will be resized later
+-        if (typeof OffscreenCanvas !== 'undefined') {
+-            // Prefer OffscreenCanvas for Worker environments
+-            this.canvas = new OffscreenCanvas(300, 150);
++        // Create canvases
++        if (typeof OffscreenCanvas !== "undefined") {
++            this.canvas = new OffscreenCanvas(1, 1);
++            this.alphaCanvas = new OffscreenCanvas(1, 1);
++        } else {
++            this.canvas = document.createElement("canvas");
++            this.alphaCanvas = document.createElement("canvas");
+         }
+-        else {
+-            this.canvas = document.createElement('canvas');
+-        }
+-        const gl = this.canvas.getContext('webgl2', {
+-            premultipliedAlpha: false,
+-        }); // Casting because of some TypeScript weirdness
+-        if (!gl) {
+-            throw new Error('Couldn\'t acquire WebGL 2 context.');
+-        }
+-        this.gl = gl;
+-        this.program = this.createProgram();
+-        this.vao = this.createVAO();
+-        this.colorTexture = this.createTexture();
+-        this.alphaTexture = this.createTexture();
+-        this.gl.useProgram(this.program);
+-        this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'u_colorTexture'), 0);
+-        this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'u_alphaTexture'), 1);
+-    }
+-    createProgram() {
+-        const vertexShader = this.createShader(this.gl.VERTEX_SHADER, `#version 300 es
+-			in vec2 a_position;
+-			in vec2 a_texCoord;
+-			out vec2 v_texCoord;
+ 
+-			void main() {
+-				gl_Position = vec4(a_position, 0.0, 1.0);
+-				v_texCoord = a_texCoord;
+-			}
+-		`);
+-        const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, `#version 300 es
+-			precision highp float;
++        const ctx = this.canvas.getContext("2d", {
++            alpha: true,
++            willReadFrequently: true
++        });
++        const alphaCtx = this.alphaCanvas.getContext("2d", {
++            alpha: true,
++            willReadFrequently: true
++        });
+ 
+-			uniform sampler2D u_colorTexture;
+-			uniform sampler2D u_alphaTexture;
+-			in vec2 v_texCoord;
+-			out vec4 fragColor;
++        if (!ctx || !alphaCtx) {
++            throw new Error("Couldn't acquire 2D canvas context.");
++        }
+ 
+-			void main() {
+-				vec3 color = texture(u_colorTexture, v_texCoord).rgb;
+-				float alpha = texture(u_alphaTexture, v_texCoord).r;
+-				fragColor = vec4(color, alpha);
+-			}
+-		`);
+-        const program = this.gl.createProgram();
+-        this.gl.attachShader(program, vertexShader);
+-        this.gl.attachShader(program, fragmentShader);
+-        this.gl.linkProgram(program);
+-        return program;
+-    }
+-    createShader(type, source) {
+-        const shader = this.gl.createShader(type);
+-        this.gl.shaderSource(shader, source);
+-        this.gl.compileShader(shader);
+-        return shader;
+-    }
+-    createVAO() {
+-        const vao = this.gl.createVertexArray();
+-        this.gl.bindVertexArray(vao);
+-        const vertices = new Float32Array([
+-            -1, -1, 0, 1,
+-            1, -1, 1, 1,
+-            -1, 1, 0, 0,
+-            1, 1, 1, 0,
+-        ]);
+-        const buffer = this.gl.createBuffer();
+-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+-        const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+-        const texCoordLocation = this.gl.getAttribLocation(this.program, 'a_texCoord');
+-        this.gl.enableVertexAttribArray(positionLocation);
+-        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 16, 0);
+-        this.gl.enableVertexAttribArray(texCoordLocation);
+-        this.gl.vertexAttribPointer(texCoordLocation, 2, this.gl.FLOAT, false, 16, 8);
+-        return vao;
+-    }
+-    createTexture() {
+-        const texture = this.gl.createTexture();
+-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+-        return texture;
++        this.ctx = ctx;
++        this.alphaCtx = alphaCtx;
+     }
++
+     update(color, alpha) {
+-        if (color.displayWidth !== this.canvas.width || color.displayHeight !== this.canvas.height) {
+-            this.canvas.width = color.displayWidth;
+-            this.canvas.height = color.displayHeight;
+-        }
+-        this.gl.activeTexture(this.gl.TEXTURE0);
+-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.colorTexture);
+-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, color);
+-        this.gl.activeTexture(this.gl.TEXTURE1);
+-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.alphaTexture);
+-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, alpha);
+-        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+-        this.gl.bindVertexArray(this.vao);
+-        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
++        const w = color.displayWidth;
++        const h = color.displayHeight;
++
++        if (w !== this.w || h !== this.h) {
++            this.w = w;
++            this.h = h;
++            this.canvas.width = w;
++            this.canvas.height = h;
++            this.alphaCanvas.width = w;
++            this.alphaCanvas.height = h;
++            // Pre-allocate reusable ImageData
++            this.colorImageData = this.ctx.createImageData(w, h);
++            this.alphaImageData = this.ctx.createImageData(w, h);
++        }
++
++        // Draw frames to canvases
++        this.ctx.drawImage(color, 0, 0, w, h);
++        this.alphaCtx.drawImage(alpha, 0, 0, w, h);
++
++        // Read pixels into reusable ImageData objects
++        const colorImg = this.ctx.getImageData(0, 0, w, h, { colorSpace: "srgb" });
++        const alphaImg = this.alphaCtx.getImageData(0, 0, w, h, { colorSpace: "srgb" });
++
++        // Use Uint32Array view for faster pixel processing (4 bytes at once)
++        // Memory layout (little-endian): 0xAABBGGRR
++        const colorPixels = new Uint32Array(colorImg.data.buffer);
++        const alphaPixels = new Uint32Array(alphaImg.data.buffer);
++        const len = colorPixels.length;
++
++        for (let i = 0; i < len; i++) {
++            // Extract RGB from color (mask out alpha), extract R from alpha and shift to alpha position
++            colorPixels[i] = (colorPixels[i] & 0x00ffffff) | ((alphaPixels[i] & 0x000000ff) << 24);
++        }
++
++        // Write merged result
++        this.ctx.putImageData(colorImg, 0, 0);
+     }
++
+     close() {
+-        this.gl.getExtension('WEBGL_lose_context')?.loseContext();
+-        this.gl = null;
++        // Release references
++        this.ctx = null;
++        this.alphaCtx = null;
++        this.colorImageData = null;
++        this.alphaImageData = null;
+     }
+ }
+ /**
