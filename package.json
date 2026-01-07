@@ -22,7 +22,7 @@
   ],
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "devDependencies": {
-    "@polotno/video-export": "^0.0.8",
+    "@polotno/video-export": "^0.0.9",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "fluent-ffmpeg": "^2.1.3",
