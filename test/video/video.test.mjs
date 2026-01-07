@@ -155,3 +155,41 @@ for (const name of getFixtureNames()) {
     });
   }
 }
+
+// Test that audio codec is AAC
+test('audio codec should be aac', async () => {
+  const { promisify } = await import('util');
+  const ffmpeg = (await import('fluent-ffmpeg')).default;
+  const getVideoInfo = promisify(ffmpeg.ffprobe);
+
+  const instance = await createInstance({
+    key,
+    // executablePath:
+    // process.platform === 'darwin'
+    //   ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    //   : undefined,
+  });
+
+  try {
+    const jsonPath = join(fixturesDir, 'simple-audio-overlay.json');
+    const json = JSON.parse(fs.readFileSync(jsonPath));
+
+    const base64 = await instance.jsonToVideoBase64(json, {
+      fps: 5,
+      pixelRatio: 1,
+    });
+
+    const outputPath = join(currentDir, 'audio-codec-test.mp4');
+    fs.writeFileSync(outputPath, Buffer.from(base64, 'base64'));
+
+    const info = await getVideoInfo(outputPath);
+    const audioStream = info.streams.find(
+      (stream) => stream.codec_type === 'audio'
+    );
+
+    expect(audioStream, 'Video should have audio stream').toBeDefined();
+    expect(audioStream.codec_name, 'Audio codec should be aac').toBe('aac');
+  } finally {
+    await instance.close();
+  }
+});
