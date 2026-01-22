@@ -135,9 +135,6 @@ const fixtureSpecs = {
 for (const name of getFixtureNames()) {
   const spec = fixtureSpecs[name] || { kind: 'snapshot' };
 
-  // if (name !== 'bad-image') {
-  //   continue;
-  // }
   if (spec.kind === 'throws') {
     test.concurrent(name, async () => {
       const startTime = Date.now();

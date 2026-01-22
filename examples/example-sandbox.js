@@ -19,7 +19,7 @@ async function run() {
     },
     // fps: 30,
     // pixelRatio: 0.3,
-    // profilePath: 'video-profile.cpuprofile',
+    profilePath: 'video-profile.cpuprofile',
   });
 
   fs.writeFileSync('out.mp4', base64, 'base64');

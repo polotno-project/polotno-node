@@ -1,0 +1,45 @@
+{
+  "width": 800,
+  "height": 600,
+  "fonts": [],
+  "pages": [
+    {
+      "id": "page-1",
+      "children": [
+        {
+          "id": "rect-1",
+          "type": "figure",
+          "x": 50,
+          "y": 50,
+          "width": 300,
+          "height": 200,
+          "fill": "red"
+        }
+      ],
+      "width": 801,
+      "height": 601,
+      "background": "white",
+      "duration": 2000
+    },
+    {
+      "id": "page-2",
+      "children": [
+        {
+          "id": "rect-2",
+          "type": "figure",
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 300,
+          "fill": "blue"
+        }
+      ],
+      "width": 401,
+      "height": 801,
+      "background": "yellow",
+      "duration": 2000
+    }
+  ],
+  "unit": "px",
+  "dpi": 72
+}

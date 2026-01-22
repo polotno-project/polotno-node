@@ -617,7 +617,6 @@ module.exports.createInstance = async ({
         async (json, attrs) => {
           const pixelRatio = attrs.pixelRatio || 1;
           store.loadJSON(json);
-          await store.waitLoading();
           window.__polotnoThrowAssetErrorIfAny(attrs);
 
           // keep store internals consistent with image/pdf exports
