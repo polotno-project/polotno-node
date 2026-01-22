@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
+const { execSync } = require('child_process');
 const { pathToFileURL } = require('url');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
@@ -603,14 +604,43 @@ module.exports.createInstance = async ({
     return blob;
   };
 
-  const jsonToVideoDataURL = async (json, attrs) => {
-    const chunks = [];
+  const isFfmpegAvailable = () => {
+    try {
+      execSync('ffmpeg -version', { stdio: 'ignore' });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const getAudioCodec = (filePath) => {
+    try {
+      const result = execSync(
+        `ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "${filePath}"`,
+        { encoding: 'utf8' }
+      );
+      return result.trim();
+    } catch {
+      return null;
+    }
+  };
+
+  const convertAudioToAac = (inputPath, outputPath) => {
+    execSync(
+      `ffmpeg -y -i "${inputPath}" -c:v copy -c:a aac "${outputPath}"`,
+      { stdio: 'ignore' }
+    );
+  };
+
+  const jsonToVideoFile = async (json, outputPath, attrs = {}) => {
     const shouldDownloadMedia =
       !hasCustomClientUrl && !(attrs && attrs.skipDownloads);
 
     const prepared = shouldDownloadMedia
       ? await prepareLocalMediaForVideoExport(json)
       : { json, cleanup: async () => {} };
+
+    const writeStream = fs.createWriteStream(outputPath);
 
     try {
       const mimeType = await run(
@@ -708,7 +738,7 @@ module.exports.createInstance = async ({
             for (let i = 0; i < chunk.length; i++) {
               binary += String.fromCharCode(chunk[i]);
             }
-            await window.__polotnoSendChunk(btoa(binary));
+            await window.__polotnoWriteChunk(btoa(binary));
           }
 
           return videoBlob.type;
@@ -717,19 +747,59 @@ module.exports.createInstance = async ({
         {
           ...attrs,
           exposeFunctions: {
-            __polotnoSendChunk: (chunk) => chunks.push(chunk),
+            __polotnoWriteChunk: (base64Chunk) => {
+              const buffer = Buffer.from(base64Chunk, 'base64');
+              writeStream.write(buffer);
+            },
           },
         }
       );
-      return `data:${mimeType || 'video/mp4'};base64,${chunks.join('')}`;
+
+      writeStream.end();
+      await new Promise((resolve) => writeStream.on('finish', resolve));
+
+      // Convert audio to AAC if needed
+      if (isFfmpegAvailable()) {
+        const codec = getAudioCodec(outputPath);
+        if (codec && codec !== 'aac') {
+          const tempPath = outputPath + '.tmp.mp4';
+          convertAudioToAac(outputPath, tempPath);
+          await fs.promises.rename(tempPath, outputPath);
+        }
+      }
+
+      return mimeType;
     } finally {
       await prepared.cleanup();
     }
   };
 
+  const jsonToVideoDataURL = async (json, attrs) => {
+    const tempPath = path.join(
+      os.tmpdir(),
+      `polotno-video-${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`
+    );
+    try {
+      const mimeType = await jsonToVideoFile(json, tempPath, attrs);
+      const buffer = await fs.promises.readFile(tempPath);
+      return `data:${mimeType || 'video/mp4'};base64,${buffer.toString('base64')}`;
+    } finally {
+      await fs.promises.rm(tempPath, { force: true });
+    }
+  };
+
   const jsonToVideoBase64 = async (json, attrs) => {
-    const url = await jsonToVideoDataURL(json, attrs);
-    return url.split('base64,')[1];
+    const tempPath = path.join(
+      os.tmpdir(),
+      `polotno-video-${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`
+    );
+    try {
+      await jsonToVideoFile(json, tempPath, attrs);
+      const buffer = await fs.promises.readFile(tempPath);
+      return buffer.toString('base64');
+    } finally {
+      await fs.promises.rm(tempPath, { force: true });
+    }
   };
 
   const instance = {
@@ -749,6 +819,7 @@ module.exports.createInstance = async ({
     jsonToGIFBase64,
     jsonToVideoDataURL,
     jsonToVideoBase64,
+    jsonToVideoFile,
     createPage: async () =>
       await module.exports.createPage(browser, visitPage, requestInterceptor),
   };
