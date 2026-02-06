@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/small.json'));
 
   const base64 = await instance.jsonToPDFBase64(json, {
     pixelRatio: 3,

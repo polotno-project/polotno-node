@@ -14,11 +14,6 @@ import { onLoadError } from 'polotno/utils/loader';
 import { setAssetLoadTimeout, setFontLoadTimeout } from 'polotno/utils/loader';
 import { addGlobalFont } from 'polotno/utils/fonts';
 import { Node } from 'konva/lib/Node';
-import { jsPDF } from 'jspdf';
-
-// bundle jspdf into window object
-// so client will not need to load it from CDN
-window.jspdf = { jsPDF };
 
 // on any changes in polotno workspace (and internal konva nddes), re-render is automatically triggered in Konva internals
 // but we don't need to that on the server side, because actual render will be done once on canvas  export
@@ -35,10 +30,21 @@ const store = createStore({
 
 window.store = store;
 
-// Lazy loader for video export module.
-// NOTE: this is intentionally NOT part of window.config (config should remain config-only).
+// Lazy loaders for heavy modules.
+// NOTE: these are intentionally NOT part of window.config (config should remain config-only).
+
+// Lazy loader for jsPDF (used for PDF export)
+let __jspdfModulePromise = null;
+window.__polotnoLoadJspdf = async () => {
+  if (!__jspdfModulePromise) {
+    __jspdfModulePromise = import('jspdf');
+  }
+  return await __jspdfModulePromise;
+};
+
+// Lazy loader for video export module
 let __videoExportModulePromise = null;
-window.loadVideoExportModule = async () => {
+window.__polotnoLoadVideoExport = async () => {
   if (!__videoExportModulePromise) {
     __videoExportModulePromise = import('@polotno/video-export');
   }

@@ -626,10 +626,9 @@ module.exports.createInstance = async ({
   };
 
   const convertAudioToAac = (inputPath, outputPath) => {
-    execSync(
-      `ffmpeg -y -i "${inputPath}" -c:v copy -c:a aac "${outputPath}"`,
-      { stdio: 'ignore' }
-    );
+    execSync(`ffmpeg -y -i "${inputPath}" -c:v copy -c:a aac "${outputPath}"`, {
+      stdio: 'ignore',
+    });
   };
 
   const jsonToVideoFile = async (json, outputPath, attrs = {}) => {
@@ -669,13 +668,13 @@ module.exports.createInstance = async ({
           // to ensure text fits properly in animations. User preferences are ignored for now.
           window.config.setTextOverflow('resize');
 
-          if (!window.loadVideoExportModule) {
+          if (!window.__polotnoLoadVideoExport) {
             throw new Error(
-              'Video export module loader is not defined in the client. Expected window.loadVideoExportModule().'
+              'Video export module loader is not defined in the client. Expected window.__polotnoLoadVideoExport().'
             );
           }
 
-          const { storeToVideo } = await window.loadVideoExportModule();
+          const { storeToVideo } = await window.__polotnoLoadVideoExport();
 
           // Create abort controller to cancel video render on error
           const abortController = new AbortController();
@@ -782,7 +781,9 @@ module.exports.createInstance = async ({
     try {
       const mimeType = await jsonToVideoFile(json, tempPath, attrs);
       const buffer = await fs.promises.readFile(tempPath);
-      return `data:${mimeType || 'video/mp4'};base64,${buffer.toString('base64')}`;
+      return `data:${mimeType || 'video/mp4'};base64,${buffer.toString(
+        'base64'
+      )}`;
     } finally {
       await fs.promises.rm(tempPath, { force: true });
     }
