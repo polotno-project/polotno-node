@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "test -d .git && patch-package || true",
     "test": "npm run build && vitest run test/static/static.test.mjs",
     "test:video": "npm run build && vitest run test/video/video.test.mjs",
     "test:all": "npm run build && vitest run test/static/static.test.mjs test/video/video.test.mjs",
