@@ -8,5 +8,14 @@ export default defineConfig({
     testTimeout: 300000,
     environment: 'node',
     include: ['test/**/*.test.mjs'],
+    onConsoleLog(log) {
+      if (
+        log.includes('Timeout for loading font') ||
+        log.includes('Timeout triggered for loader') ||
+        log.includes('image with id')
+      ) {
+        return false;
+      }
+    },
   },
 });
