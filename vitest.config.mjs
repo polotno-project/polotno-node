@@ -5,7 +5,7 @@ export default defineConfig({
     // Keep puppeteer-heavy tests stable by default; override via env when needed.
     maxWorkers: Number(process.env.VITEST_MAX_WORKERS || 10),
     maxConcurrency: Number(process.env.VITEST_MAX_CONCURRENCY || 4),
-    testTimeout: 300000,
+    testTimeout: 60000,
     environment: 'node',
     include: ['test/**/*.test.mjs'],
     onConsoleLog(log) {
