@@ -46,7 +46,7 @@ function getPixelsDiff(img1, img2) {
     height,
     {
       threshold: 0.1,
-    }
+    },
   );
 
   return { numDiffPixels, diff };
@@ -107,6 +107,13 @@ describe('static export', () => {
     });
   });
 
+  testWithInstance('italic text', async (instance) => {
+    await matchImageSnapshot({
+      jsonFileName: 'italic-text.json',
+      instance,
+    });
+  });
+
   testWithInstance('rich text support', async (instance) => {
     await matchImageSnapshot({
       jsonFileName: 'rich-text.json',
@@ -154,24 +161,24 @@ describe('static export', () => {
 
   testWithInstance('fail on timeout', async (instance) => {
     const json = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+      fs.readFileSync(join(fixturesDir, 'polotno-1.json')),
     );
     await expect(
       instance.jsonToImageBase64(json, {
         assetLoadTimeout: 1,
-      })
+      }),
     ).rejects.toThrow();
   });
 
   testWithInstance('fail on font timeout', async (instance) => {
     const json = JSON.parse(
-      fs.readFileSync(join(fixturesDir, 'polotno-with-text.json'))
+      fs.readFileSync(join(fixturesDir, 'polotno-with-text.json')),
     );
 
     await expect(
       instance.jsonToImageBase64(json, {
         fontLoadTimeout: 1,
-      })
+      }),
     ).rejects.toThrow();
   });
 
@@ -185,7 +192,7 @@ describe('static export', () => {
           skipFontError: true,
         },
       });
-    }
+    },
   );
 
   testWithInstance('skip error on image loading', async (instance) => {
@@ -234,7 +241,7 @@ describe('static export', () => {
     'Should clear error with no parallel pages',
     async (instance) => {
       const json = JSON.parse(
-        fs.readFileSync(join(fixturesDir, 'bad-image-url.json'))
+        fs.readFileSync(join(fixturesDir, 'bad-image-url.json')),
       );
       try {
         await instance.jsonToDataURL(json);
@@ -242,38 +249,38 @@ describe('static export', () => {
         expect(e.message).toContain('image');
       }
       const json2 = JSON.parse(
-        fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+        fs.readFileSync(join(fixturesDir, 'polotno-1.json')),
       );
       await instance.jsonToDataURL(json2);
       expect(true).toBe(true);
     },
-    { useParallelPages: false }
+    { useParallelPages: false },
   );
 
   testWithInstance(
     'Should throw error when several task in the process for non parallel',
     async (instance) => {
       const json = JSON.parse(
-        fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+        fs.readFileSync(join(fixturesDir, 'polotno-1.json')),
       );
       await expect(
-        Promise.all([json, json].map((j) => instance.jsonToDataURL(j)))
+        Promise.all([json, json].map((j) => instance.jsonToDataURL(j))),
       ).rejects.toThrow();
     },
-    { useParallelPages: false }
+    { useParallelPages: false },
   );
 
   testWithInstance(
     'Should not throw error when several task in sequence for non parallel',
     async (instance) => {
       const json = JSON.parse(
-        fs.readFileSync(join(fixturesDir, 'polotno-1.json'))
+        fs.readFileSync(join(fixturesDir, 'polotno-1.json')),
       );
       await instance.jsonToDataURL(json);
       await instance.jsonToDataURL(json);
       expect(true).toBe(true);
     },
-    { useParallelPages: false }
+    { useParallelPages: false },
   );
 
   testWithInstance('buffer canvas rendering', async (instance) => {
@@ -348,7 +355,7 @@ describe('static export', () => {
     'render several pages with different fonts',
     async (instance) => {
       const json = JSON.parse(
-        fs.readFileSync(join(fixturesDir, 'different-fonts.json'))
+        fs.readFileSync(join(fixturesDir, 'different-fonts.json')),
       );
       const dataUrl = await instance.run(async (json) => {
         window.config.setRichTextEnabled(true);
@@ -375,6 +382,6 @@ describe('static export', () => {
         fs.writeFileSync(diffPath, PNG.sync.write(diff));
       }
       expect(numDiffPixels).toBe(0);
-    }
+    },
   );
 });
