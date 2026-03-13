@@ -2,7 +2,7 @@ const fs = require('fs');
 const { createInstance } = require('../index.js');
 
 const { config } = require('dotenv');
-config();
+config({ quiet: true });
 
 async function run() {
   // create working instance
@@ -14,7 +14,7 @@ async function run() {
   const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
 
   const base64 = await instance.jsonToPDFBase64(json, {
-    pixelRatio: 3,
+    pixelRatio: 2,
     // quality: 0.8,
     // textSplitAllowed: true,
     // htmlTextRenderEnabled: true,
