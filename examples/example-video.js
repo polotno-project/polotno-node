@@ -11,7 +11,7 @@ async function run() {
   });
 
   // load sample json
-  const json = JSON.parse(fs.readFileSync('./test-data/video.json'));
+  const json = JSON.parse(fs.readFileSync('./test-data/private.json'));
   const base64 = await instance.jsonToVideoBase64(json, {
     // Enable CPU profiling - generates .cpuprofile file loadable in Chrome DevTools
     profilePath: 'video-profile.cpuprofile',

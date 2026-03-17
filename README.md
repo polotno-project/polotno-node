@@ -251,7 +251,11 @@ By default, when exporting video and **only** when using the default local clien
 
 - Download all **remote** video elements (`type: 'video'`) and `json.audios` sources into a temporary folder
 - Deduplicate downloads (same URL is downloaded once)
+- Probe downloaded remote videos with `ffprobe`
+- Conditionally normalize incompatible downloaded videos into MP4 with H.264 video, `yuv420p`, and AAC audio for better Chromium render compatibility
 - Rewrite `src` to `file://...` URLs so Chromium loads media from disk
+
+For best compatibility, use MP4 with H.264 (`yuv420p`) video and AAC audio.
 
 If you want to disable this behavior, set:
 
@@ -260,6 +264,8 @@ const url = await instance.jsonToVideoDataURL(json, {
   skipDownloads: true,
 });
 ```
+
+When `skipDownloads` is enabled, `polotno-node` will skip both remote-media downloading and the conditional video preprocessing described above.
 
 ### `attrs.assetLoadTimeout`
 

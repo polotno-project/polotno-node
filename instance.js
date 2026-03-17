@@ -89,7 +89,7 @@ const guessExtension = (urlString, contentType) => {
 const downloadUrlToFile = async (urlString, destinationPath) => {
   if (typeof fetch !== 'function') {
     throw new Error(
-      'Global fetch API is not available in this Node.js runtime. Please use Node 18+.'
+      'Global fetch API is not available in this Node.js runtime. Please use Node 18+.',
     );
   }
   const MAX_ATTEMPTS = 3;
@@ -128,7 +128,7 @@ const downloadUrlToFile = async (urlString, destinationPath) => {
 
       await pipeline(
         Readable.fromWeb(res.body),
-        fs.createWriteStream(destinationPath)
+        fs.createWriteStream(destinationPath),
       );
 
       return res.headers.get('content-type') || '';
@@ -145,22 +145,75 @@ const downloadUrlToFile = async (urlString, destinationPath) => {
   const message =
     lastError && lastError.message ? lastError.message : String(lastError);
   throw new Error(
-    `Failed to download media after ${MAX_ATTEMPTS} attempts: ${urlString}\nLast error: ${message}`
+    `Failed to download media after ${MAX_ATTEMPTS} attempts: ${urlString}\nLast error: ${message}`,
   );
+};
+
+// Returns a human-readable reason string if the video file needs transcoding
+// for Chromium headless compatibility, or null if it is already render-safe.
+const getVideoNormalizationReason = (filePath) => {
+  try {
+    const raw = execSync(
+      `ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,codec_tag_string,pix_fmt -of json "${filePath}"`,
+      { encoding: 'utf8' },
+    );
+    const info = JSON.parse(raw);
+    const vs = info?.streams?.[0];
+    if (!vs) return null;
+
+    const codec = (vs.codec_name || '').toLowerCase();
+    const tag = (vs.codec_tag_string || '').toLowerCase();
+    if (['hevc', 'h265'].includes(codec) || ['hvc1', 'hev1'].includes(tag)) {
+      return 'HEVC/H.265 is not supported by Chromium headless';
+    }
+    const pix = (vs.pix_fmt || '').toLowerCase();
+    if (pix && pix !== 'yuv420p') {
+      return `pixel format "${pix}" is not the preferred yuv420p`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const isFfmpegAvailable = () => {
+  try {
+    execSync('ffmpeg -version', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const getAudioCodec = (filePath) => {
+  try {
+    const result = execSync(
+      `ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "${filePath}"`,
+      { encoding: 'utf8' },
+    );
+    return result.trim();
+  } catch {
+    return null;
+  }
+};
+
+const convertAudioToAac = (inputPath, outputPath) => {
+  execSync(`ffmpeg -y -i "${inputPath}" -c:v copy -c:a aac "${outputPath}"`, {
+    stdio: 'ignore',
+  });
 };
 
 const prepareLocalMediaForVideoExport = async (json) => {
   const clonedJson = JSON.parse(JSON.stringify(json));
   const pointers = collectMediaSourcePointers(clonedJson);
 
-  // Map original URL -> file://... URL
   const rewriteMap = new Map();
   const urlsToDownload = [];
+  const videoUrls = new Set();
 
   for (const p of pointers) {
     const src = p.target[p.key];
     if (isDataOrFileSrc(src)) continue;
-    // Only download http/https sources (everything else is skipped)
     try {
       const u = new URL(src);
       if (u.protocol !== 'http:' && u.protocol !== 'https:') continue;
@@ -171,6 +224,7 @@ const prepareLocalMediaForVideoExport = async (json) => {
       rewriteMap.set(src, null);
       urlsToDownload.push(src);
     }
+    if (p.kind === 'video') videoUrls.add(src);
   }
 
   if (urlsToDownload.length === 0) {
@@ -178,7 +232,7 @@ const prepareLocalMediaForVideoExport = async (json) => {
   }
 
   const tempDir = await fs.promises.mkdtemp(
-    path.join(os.tmpdir(), 'polotno-node-assets-')
+    path.join(os.tmpdir(), 'polotno-node-assets-'),
   );
 
   let didCleanup = false;
@@ -189,21 +243,33 @@ const prepareLocalMediaForVideoExport = async (json) => {
   };
 
   try {
-    for (const src of urlsToDownload) {
-      const tmpBase = crypto.randomUUID
-        ? crypto.randomUUID()
-        : crypto.randomBytes(16).toString('hex');
-      // First download to a temp file without extension to know content-type
-      const tmpPath = path.join(tempDir, tmpBase);
-      const contentType = await downloadUrlToFile(src, tmpPath);
-      const ext = guessExtension(src, contentType);
-      const finalPath = tmpPath + ext;
-      // rename for nicer file URLs and better sniffing
-      await fs.promises.rename(tmpPath, finalPath);
-      rewriteMap.set(src, pathToFileURL(finalPath).toString());
-    }
+    await Promise.all(
+      urlsToDownload.map(async (src) => {
+        const tmpBase = crypto.randomUUID
+          ? crypto.randomUUID()
+          : crypto.randomBytes(16).toString('hex');
+        const tmpPath = path.join(tempDir, tmpBase);
+        const contentType = await downloadUrlToFile(src, tmpPath);
+        const ext = guessExtension(src, contentType);
+        let finalPath = tmpPath + ext;
+        await fs.promises.rename(tmpPath, finalPath);
 
-    // Apply rewrites
+        if (videoUrls.has(src)) {
+          const reason = getVideoNormalizationReason(finalPath);
+          if (reason) {
+            const normalizedPath = finalPath + '.normalized.mp4';
+            execSync(
+              `ffmpeg -y -i "${finalPath}" -c:v libx264 -pix_fmt yuv420p -c:a aac -movflags +faststart "${normalizedPath}"`,
+              { stdio: 'ignore' },
+            );
+            finalPath = normalizedPath;
+          }
+        }
+
+        rewriteMap.set(src, pathToFileURL(finalPath).toString());
+      }),
+    );
+
     for (const p of pointers) {
       const src = p.target[p.key];
       const replacement = rewriteMap.get(src);
@@ -279,7 +345,7 @@ module.exports.jsonToDataURL = async (page, json, attrs) => {
       return store.toDataURL({ ...attrs, pixelRatio });
     },
     json,
-    attrs || {}
+    attrs || {},
   );
 };
 
@@ -291,7 +357,7 @@ module.exports.jsonToPDFDataURL = async (page, json, attrs) => {
       return await store.toPDFDataURL(attrs);
     },
     json,
-    attrs || {}
+    attrs || {},
   );
 };
 
@@ -303,7 +369,7 @@ module.exports.jsonToBlob = async (page, json, attrs) => {
       return await store.toBlob(attrs);
     },
     json,
-    attrs || {}
+    attrs || {},
   );
 };
 
@@ -382,7 +448,7 @@ module.exports.createInstance = async ({
 
     if (busyPages.indexOf(page) >= 0) {
       throw new Error(
-        'Current rendering context is busy with another task. Please use `useParallelPages: true` option to run multiple tasks in parallel or make sure previous task is finished before starting a new one.'
+        'Current rendering context is busy with another task. Please use `useParallelPages: true` option to run multiple tasks in parallel or make sure previous task is finished before starting a new one.',
       );
     }
 
@@ -404,7 +470,7 @@ module.exports.createInstance = async ({
             window.config.setAssetLoadTimeout(timeout);
           } else {
             console.error(
-              'setAssetLoadTimeout function is not defined in the client.'
+              'setAssetLoadTimeout function is not defined in the client.',
             );
           }
         }, args[1].assetLoadTimeout);
@@ -415,7 +481,7 @@ module.exports.createInstance = async ({
             window.config.setFontLoadTimeout(timeout);
           } else {
             console.error(
-              'setFontLoadTimeout function is not defined in the client.'
+              'setFontLoadTimeout function is not defined in the client.',
             );
           }
         }, args[1].fontLoadTimeout);
@@ -426,7 +492,7 @@ module.exports.createInstance = async ({
             window.config.setRichTextEnabled(true);
           } else {
             console.error(
-              'setRichTextEnabled function is not defined in the client.'
+              'setRichTextEnabled function is not defined in the client.',
             );
           }
         });
@@ -437,7 +503,7 @@ module.exports.createInstance = async ({
             window.config.setTextVerticalResizeEnabled(true);
           } else {
             console.error(
-              'setTextVerticalResizeEnabled function is not defined in the client.'
+              'setTextVerticalResizeEnabled function is not defined in the client.',
             );
           }
         });
@@ -448,7 +514,7 @@ module.exports.createInstance = async ({
             window.config.unstable_setTextSplitAllowed(true);
           } else {
             console.error(
-              'unstable_setTextSplitAllowed function is not defined in the client.'
+              'unstable_setTextSplitAllowed function is not defined in the client.',
             );
           }
         });
@@ -471,7 +537,7 @@ module.exports.createInstance = async ({
             window.config.setTextOverflow(overflow);
           } else {
             console.error(
-              'setTextOverflow function is not defined in the client.'
+              'setTextOverflow function is not defined in the client.',
             );
           }
         }, args[1].textOverflow);
@@ -483,7 +549,7 @@ module.exports.createInstance = async ({
           });
         } else {
           console.error(
-            'onLoadError function is not defined in the client. Error handling will not work.'
+            'onLoadError function is not defined in the client. Error handling will not work.',
           );
         }
       });
@@ -499,7 +565,7 @@ module.exports.createInstance = async ({
 
       const assetErrorMessage = await consumeAssetLoadingErrorMessage(
         page,
-        args[1]
+        args[1],
       );
       if (assetErrorMessage) {
         throw new Error(assetErrorMessage);
@@ -527,7 +593,7 @@ module.exports.createInstance = async ({
       // a captured Polotno asset-loading error when available.
       const assetErrorMessage = await consumeAssetLoadingErrorMessage(
         page,
-        args[1]
+        args[1],
       );
       // remove busy page
       busyPages.splice(busyPages.indexOf(page), 1);
@@ -551,7 +617,7 @@ module.exports.createInstance = async ({
         return store.toDataURL({ ...attrs, pixelRatio });
       },
       json,
-      attrs || {}
+      attrs || {},
     );
   };
 
@@ -562,7 +628,7 @@ module.exports.createInstance = async ({
         return await store.toGIFDataURL(attrs);
       },
       json,
-      attrs || {}
+      attrs || {},
     );
   };
 
@@ -589,7 +655,7 @@ module.exports.createInstance = async ({
         return await store.toPDFDataURL(attrs);
       },
       json,
-      attrs || {}
+      attrs || {},
     );
   };
 
@@ -602,33 +668,6 @@ module.exports.createInstance = async ({
     const base64 = await jsonToImageBase64(json, attrs);
     const blob = Buffer.from(base64, 'base64');
     return blob;
-  };
-
-  const isFfmpegAvailable = () => {
-    try {
-      execSync('ffmpeg -version', { stdio: 'ignore' });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const getAudioCodec = (filePath) => {
-    try {
-      const result = execSync(
-        `ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "${filePath}"`,
-        { encoding: 'utf8' }
-      );
-      return result.trim();
-    } catch {
-      return null;
-    }
-  };
-
-  const convertAudioToAac = (inputPath, outputPath) => {
-    execSync(`ffmpeg -y -i "${inputPath}" -c:v copy -c:a aac "${outputPath}"`, {
-      stdio: 'ignore',
-    });
   };
 
   const jsonToVideoFile = async (json, outputPath, attrs = {}) => {
@@ -670,7 +709,7 @@ module.exports.createInstance = async ({
 
           if (!window.__polotnoLoadVideoExport) {
             throw new Error(
-              'Video export module loader is not defined in the client. Expected window.__polotnoLoadVideoExport().'
+              'Video export module loader is not defined in the client. Expected window.__polotnoLoadVideoExport().',
             );
           }
 
@@ -751,7 +790,7 @@ module.exports.createInstance = async ({
               writeStream.write(buffer);
             },
           },
-        }
+        },
       );
 
       writeStream.end();
@@ -776,13 +815,13 @@ module.exports.createInstance = async ({
   const jsonToVideoDataURL = async (json, attrs) => {
     const tempPath = path.join(
       os.tmpdir(),
-      `polotno-video-${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`
+      `polotno-video-${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`,
     );
     try {
       const mimeType = await jsonToVideoFile(json, tempPath, attrs);
       const buffer = await fs.promises.readFile(tempPath);
       return `data:${mimeType || 'video/mp4'};base64,${buffer.toString(
-        'base64'
+        'base64',
       )}`;
     } finally {
       await fs.promises.rm(tempPath, { force: true });
@@ -792,7 +831,7 @@ module.exports.createInstance = async ({
   const jsonToVideoBase64 = async (json, attrs) => {
     const tempPath = path.join(
       os.tmpdir(),
-      `polotno-video-${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`
+      `polotno-video-${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`,
     );
     try {
       await jsonToVideoFile(json, tempPath, attrs);

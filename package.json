@@ -30,7 +30,6 @@
     "patch-package": "^8.0.1",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
-    "polotno": "^2.38.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vite": "^8.0.0",
@@ -41,6 +40,7 @@
   "license": "MIT",
   "dependencies": {
     "@sparticuz/chromium": "^143.0.4",
+    "polotno": "^2.38.2",
     "puppeteer": "24.39.1",
     "puppeteer-core": "24.39.1",
     "tmp": "^0.2.5"
