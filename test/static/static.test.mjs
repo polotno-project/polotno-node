@@ -85,7 +85,7 @@ async function matchImageSnapshot({
     console.log(numDiffPixels, tolerance);
     fs.writeFileSync(diffPath, PNG.sync.write(diff));
   }
-  expect(numDiffPixels).toBe(0);
+  expect(numDiffPixels).toBeLessThanOrEqual(tolerance);
 }
 
 describe('static export', () => {
@@ -123,7 +123,6 @@ describe('static export', () => {
       },
       // sometimes is renders a bit differently
       //
-      tolerance: 8000,
     });
   });
 
