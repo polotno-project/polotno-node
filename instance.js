@@ -1,12 +1,12 @@
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const crypto = require('crypto');
-const { execSync } = require('child_process');
-const { pathToFileURL } = require('url');
-const { Readable } = require('stream');
-const { pipeline } = require('stream/promises');
-const DEFAULT_CLIENT = `file:${path.join(__dirname, 'dist', 'index.html')}`;
+const path = require("path");
+const fs = require("fs");
+const os = require("os");
+const crypto = require("crypto");
+const { execSync } = require("child_process");
+const { pathToFileURL } = require("url");
+const { Readable } = require("stream");
+const { pipeline } = require("stream/promises");
+const DEFAULT_CLIENT = `file:${path.join(__dirname, "dist", "index.html")}`;
 
 // Walk Polotno nodes recursively (depth-first)
 // cb(node) may return true to stop traversing the current branch early
@@ -29,12 +29,12 @@ const collectMediaSourcePointers = (json) => {
   // videos in elements tree
   for (const page of json?.pages || []) {
     for (const el of page?.children || []) {
-      if (el?.type === 'video' && typeof el.src === 'string') {
-        pointers.push({ kind: 'video', target: el, key: 'src' });
+      if (el?.type === "video" && typeof el.src === "string") {
+        pointers.push({ kind: "video", target: el, key: "src" });
       }
       forEveryChild(el, (child) => {
-        if (child?.type === 'video' && typeof child.src === 'string') {
-          pointers.push({ kind: 'video', target: child, key: 'src' });
+        if (child?.type === "video" && typeof child.src === "string") {
+          pointers.push({ kind: "video", target: child, key: "src" });
         }
       });
     }
@@ -42,8 +42,8 @@ const collectMediaSourcePointers = (json) => {
 
   // audios array
   for (const audio of json?.audios || []) {
-    if (audio && typeof audio.src === 'string') {
-      pointers.push({ kind: 'audio', target: audio, key: 'src' });
+    if (audio && typeof audio.src === "string") {
+      pointers.push({ kind: "audio", target: audio, key: "src" });
     }
   }
 
@@ -51,45 +51,45 @@ const collectMediaSourcePointers = (json) => {
 };
 
 const isDataOrFileSrc = (src) => {
-  if (typeof src !== 'string') return true;
+  if (typeof src !== "string") return true;
   return (
-    src.startsWith('data:') ||
-    src.startsWith('file:') ||
-    src.startsWith('blob:')
+    src.startsWith("data:") ||
+    src.startsWith("file:") ||
+    src.startsWith("blob:")
   );
 };
 
 const guessExtension = (urlString, contentType) => {
   try {
     const u = new URL(urlString);
-    const ext = path.extname(u.pathname || '');
+    const ext = path.extname(u.pathname || "");
     if (ext) return ext;
   } catch (e) {
     // ignore; fallback to content-type
   }
 
-  const ct = String(contentType || '')
-    .split(';')[0]
+  const ct = String(contentType || "")
+    .split(";")[0]
     .trim()
     .toLowerCase();
   const map = {
-    'video/mp4': '.mp4',
-    'video/webm': '.webm',
-    'video/quicktime': '.mov',
-    'audio/mpeg': '.mp3',
-    'audio/mp4': '.m4a',
-    'audio/wav': '.wav',
-    'audio/x-wav': '.wav',
-    'audio/ogg': '.ogg',
-    'audio/webm': '.webm',
+    "video/mp4": ".mp4",
+    "video/webm": ".webm",
+    "video/quicktime": ".mov",
+    "audio/mpeg": ".mp3",
+    "audio/mp4": ".m4a",
+    "audio/wav": ".wav",
+    "audio/x-wav": ".wav",
+    "audio/ogg": ".ogg",
+    "audio/webm": ".webm",
   };
-  return map[ct] || '.bin';
+  return map[ct] || ".bin";
 };
 
 const downloadUrlToFile = async (urlString, destinationPath) => {
-  if (typeof fetch !== 'function') {
+  if (typeof fetch !== "function") {
     throw new Error(
-      'Global fetch API is not available in this Node.js runtime. Please use Node 18+.',
+      "Global fetch API is not available in this Node.js runtime. Please use Node 18+.",
     );
   }
   const MAX_ATTEMPTS = 3;
@@ -104,11 +104,11 @@ const downloadUrlToFile = async (urlString, destinationPath) => {
       const res = await fetch(urlString);
       if (!res.ok) {
         // Best-effort read of error body (small) for debugging.
-        let bodyPreview = '';
+        let bodyPreview = "";
         try {
           bodyPreview = await res.text();
           if (bodyPreview.length > 500) {
-            bodyPreview = bodyPreview.slice(0, 500) + '...';
+            bodyPreview = bodyPreview.slice(0, 500) + "...";
           }
         } catch (e) {
           // ignore
@@ -118,12 +118,12 @@ const downloadUrlToFile = async (urlString, destinationPath) => {
           bodyPreview ? `body: ${JSON.stringify(bodyPreview)}` : null,
         ]
           .filter(Boolean)
-          .join(', ');
+          .join(", ");
 
         throw new Error(`HTTP error while downloading: ${details}`);
       }
       if (!res.body) {
-        throw new Error('Empty response body');
+        throw new Error("Empty response body");
       }
 
       await pipeline(
@@ -131,7 +131,7 @@ const downloadUrlToFile = async (urlString, destinationPath) => {
         fs.createWriteStream(destinationPath),
       );
 
-      return res.headers.get('content-type') || '';
+      return res.headers.get("content-type") || "";
     } catch (e) {
       lastError = e;
       if (attempt < MAX_ATTEMPTS) {
@@ -155,19 +155,19 @@ const getVideoNormalizationReason = (filePath) => {
   try {
     const raw = execSync(
       `ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,codec_tag_string,pix_fmt -of json "${filePath}"`,
-      { encoding: 'utf8' },
+      { encoding: "utf8" },
     );
     const info = JSON.parse(raw);
     const vs = info?.streams?.[0];
     if (!vs) return null;
 
-    const codec = (vs.codec_name || '').toLowerCase();
-    const tag = (vs.codec_tag_string || '').toLowerCase();
-    if (['hevc', 'h265'].includes(codec) || ['hvc1', 'hev1'].includes(tag)) {
-      return 'HEVC/H.265 is not supported by Chromium headless';
+    const codec = (vs.codec_name || "").toLowerCase();
+    const tag = (vs.codec_tag_string || "").toLowerCase();
+    if (["hevc", "h265"].includes(codec) || ["hvc1", "hev1"].includes(tag)) {
+      return "HEVC/H.265 is not supported by Chromium headless";
     }
-    const pix = (vs.pix_fmt || '').toLowerCase();
-    if (pix && pix !== 'yuv420p') {
+    const pix = (vs.pix_fmt || "").toLowerCase();
+    if (pix && pix !== "yuv420p") {
       return `pixel format "${pix}" is not the preferred yuv420p`;
     }
     return null;
@@ -178,7 +178,7 @@ const getVideoNormalizationReason = (filePath) => {
 
 const isFfmpegAvailable = () => {
   try {
-    execSync('ffmpeg -version', { stdio: 'ignore' });
+    execSync("ffmpeg -version", { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -189,7 +189,7 @@ const getAudioCodec = (filePath) => {
   try {
     const result = execSync(
       `ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "${filePath}"`,
-      { encoding: 'utf8' },
+      { encoding: "utf8" },
     );
     return result.trim();
   } catch {
@@ -199,7 +199,7 @@ const getAudioCodec = (filePath) => {
 
 const convertAudioToAac = (inputPath, outputPath) => {
   execSync(`ffmpeg -y -i "${inputPath}" -c:v copy -c:a aac "${outputPath}"`, {
-    stdio: 'ignore',
+    stdio: "ignore",
   });
 };
 
@@ -216,7 +216,7 @@ const prepareLocalMediaForVideoExport = async (json) => {
     if (isDataOrFileSrc(src)) continue;
     try {
       const u = new URL(src);
-      if (u.protocol !== 'http:' && u.protocol !== 'https:') continue;
+      if (u.protocol !== "http:" && u.protocol !== "https:") continue;
     } catch (e) {
       continue;
     }
@@ -224,7 +224,7 @@ const prepareLocalMediaForVideoExport = async (json) => {
       rewriteMap.set(src, null);
       urlsToDownload.push(src);
     }
-    if (p.kind === 'video') videoUrls.add(src);
+    if (p.kind === "video") videoUrls.add(src);
   }
 
   if (urlsToDownload.length === 0) {
@@ -232,7 +232,7 @@ const prepareLocalMediaForVideoExport = async (json) => {
   }
 
   const tempDir = await fs.promises.mkdtemp(
-    path.join(os.tmpdir(), 'polotno-node-assets-'),
+    path.join(os.tmpdir(), "polotno-node-assets-"),
   );
 
   let didCleanup = false;
@@ -247,7 +247,7 @@ const prepareLocalMediaForVideoExport = async (json) => {
       urlsToDownload.map(async (src) => {
         const tmpBase = crypto.randomUUID
           ? crypto.randomUUID()
-          : crypto.randomBytes(16).toString('hex');
+          : crypto.randomBytes(16).toString("hex");
         const tmpPath = path.join(tempDir, tmpBase);
         const contentType = await downloadUrlToFile(src, tmpPath);
         const ext = guessExtension(src, contentType);
@@ -257,10 +257,10 @@ const prepareLocalMediaForVideoExport = async (json) => {
         if (videoUrls.has(src)) {
           const reason = getVideoNormalizationReason(finalPath);
           if (reason) {
-            const normalizedPath = finalPath + '.normalized.mp4';
+            const normalizedPath = finalPath + ".normalized.mp4";
             execSync(
               `ffmpeg -y -i "${finalPath}" -c:v libx264 -pix_fmt yuv420p -c:a aac -movflags +faststart "${normalizedPath}"`,
-              { stdio: 'ignore' },
+              { stdio: "ignore" },
             );
             finalPath = normalizedPath;
           }
@@ -285,13 +285,115 @@ const prepareLocalMediaForVideoExport = async (json) => {
   }
 };
 
-module.exports.createPage = async (browser, url, requestInterceptor) => {
+// Cache Google Fonts responses (CSS + font binaries) for the lifetime of the
+// process and serve them to every page. Every page starts with an empty HTTP
+// cache, so without this each render re-downloads the same fonts — and bursts
+// of parallel renders (e.g. a test suite) get throttled by Google Fonts: the
+// stylesheet request just hangs, the font load times out and text falls back
+// to a default font.
+const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
+const isFontUrl = (url) => FONT_HOSTS.some((host) => url.includes(host));
+const fontCache = new Map(); // url -> { contentType, body }
+
+// Second cache layer on disk, shared between processes and across runs
+// (e.g. parallel test workers), so even a cold process doesn't re-download.
+const FONT_CACHE_DIR = path.join(os.tmpdir(), "polotno-node-font-cache");
+const FONT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const fontCacheDiskPath = (url) =>
+  path.join(
+    FONT_CACHE_DIR,
+    crypto.createHash("sha1").update(url).digest("hex") + ".json",
+  );
+const readFontCacheFromDisk = (url) => {
+  try {
+    const file = fontCacheDiskPath(url);
+    if (Date.now() - fs.statSync(file).mtimeMs > FONT_CACHE_TTL) {
+      return null;
+    }
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    return { contentType: data.contentType, body: Buffer.from(data.body, "base64") };
+  } catch (e) {
+    return null;
+  }
+};
+const writeFontCacheToDisk = (url, entry) => {
+  try {
+    fs.mkdirSync(FONT_CACHE_DIR, { recursive: true });
+    const file = fontCacheDiskPath(url);
+    const tmpFile = `${file}.${process.pid}.tmp`;
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        url,
+        contentType: entry.contentType,
+        body: entry.body.toString("base64"),
+      }),
+    );
+    fs.renameSync(tmpFile, file);
+  } catch (e) {
+    // best effort - cache stays in memory only
+  }
+};
+
+module.exports.createPage = async (
+  browser,
+  url,
+  requestInterceptor,
+  useFontCache = true,
+) => {
   const page = await browser.newPage();
 
   // Attach request interceptor if provided
-  if (typeof requestInterceptor === 'function') {
+  if (useFontCache || typeof requestInterceptor === "function") {
     await page.setRequestInterception(true);
-    page.on('request', requestInterceptor);
+    page.on("request", (request) => {
+      if (useFontCache && isFontUrl(request.url())) {
+        let cached = fontCache.get(request.url());
+        if (!cached) {
+          cached = readFontCacheFromDisk(request.url());
+          if (cached) {
+            fontCache.set(request.url(), cached);
+          }
+        }
+        if (cached) {
+          request
+            .respond({
+              status: 200,
+              contentType: cached.contentType,
+              body: cached.body,
+            })
+            .catch(() => {});
+          return;
+        }
+      }
+      if (typeof requestInterceptor === "function") {
+        requestInterceptor(request);
+      } else {
+        request.continue().catch(() => {});
+      }
+    });
+    if (useFontCache) {
+      page.on("response", async (response) => {
+        try {
+          if (
+            !isFontUrl(response.url()) ||
+            response.status() !== 200 ||
+            fontCache.has(response.url())
+          ) {
+            return;
+          }
+          const body = await response.buffer();
+          const entry = {
+            contentType: response.headers()["content-type"] || "",
+            body,
+          };
+          fontCache.set(response.url(), entry);
+          writeFontCacheToDisk(response.url(), entry);
+        } catch (e) {
+          // page may already be closed; just skip caching
+        }
+      });
+    }
   }
 
   // we need to make sure that headless is inside user agent
@@ -299,32 +401,32 @@ module.exports.createPage = async (browser, url, requestInterceptor) => {
   // but also lets NOT just overwrite default one, because Google Fonts may send "reduced" version of font
   // so some languages may not work
   const userAgent = await page.evaluate(() => navigator.userAgent);
-  if (userAgent.indexOf('Headless') === -1) {
-    await page.setUserAgent(userAgent + ' Chrome Headless');
+  if (userAgent.indexOf("Headless") === -1) {
+    await page.setUserAgent(userAgent + " Chrome Headless");
   }
 
-  page.on('console', (msg) => {
+  page.on("console", (msg) => {
     msg.args().forEach(async (message) => {
       // skip style information
-      if (message.toString().indexOf('margin') >= 0) {
+      if (message.toString().indexOf("margin") >= 0) {
         return;
       }
 
       const { subtype, description } = message.remoteObject();
 
-      if (subtype === 'error') {
+      if (subtype === "error") {
         console.error(description);
         return;
       }
 
       const text = message
         .toString()
-        .replace('JSHandle:', '')
-        .replace('%c', '');
+        .replace("JSHandle:", "")
+        .replace("%c", "");
       console.log(text);
     });
   });
-  page.on('pageerror', (msg) => {
+  page.on("pageerror", (msg) => {
     console.error(msg);
   });
   await page.goto(url);
@@ -383,12 +485,18 @@ module.exports.createInstance = async ({
   useParallelPages = true,
   browser,
   requestInterceptor,
+  useFontCache = true,
 } = {}) => {
   const visitPage = url || `${DEFAULT_CLIENT}?key=${key}`;
   const hasCustomClientUrl = Boolean(url);
   const firstPage = useParallelPages
     ? null
-    : await module.exports.createPage(browser, visitPage, requestInterceptor);
+    : await module.exports.createPage(
+        browser,
+        visitPage,
+        requestInterceptor,
+        useFontCache,
+      );
 
   async function ensureAssetErrorHelpers(page) {
     await page.evaluate(() => {
@@ -403,10 +511,10 @@ module.exports.createInstance = async ({
           window._polotnoError = null;
 
           const message = String(error);
-          const isFontError = message.indexOf('Timeout for loading font') >= 0;
+          const isFontError = message.indexOf("Timeout for loading font") >= 0;
           const skipFontError = isFontError && attrs && attrs.skipFontError;
 
-          const isImageError = message.indexOf('image ') >= 0;
+          const isImageError = message.indexOf("image ") >= 0;
           const skipImageError = isImageError && attrs && attrs.skipImageError;
 
           if (skipFontError || skipImageError) {
@@ -443,12 +551,17 @@ module.exports.createInstance = async ({
 
   const run = async (func, ...args) => {
     const page = useParallelPages
-      ? await module.exports.createPage(browser, visitPage, requestInterceptor)
+      ? await module.exports.createPage(
+          browser,
+          visitPage,
+          requestInterceptor,
+          useFontCache,
+        )
       : firstPage;
 
     if (busyPages.indexOf(page) >= 0) {
       throw new Error(
-        'Current rendering context is busy with another task. Please use `useParallelPages: true` option to run multiple tasks in parallel or make sure previous task is finished before starting a new one.',
+        "Current rendering context is busy with another task. Please use `useParallelPages: true` option to run multiple tasks in parallel or make sure previous task is finished before starting a new one.",
       );
     }
 
@@ -459,8 +572,8 @@ module.exports.createInstance = async ({
     const profilePath = args[1]?.profilePath;
     if (profilePath) {
       cdpSession = await page.target().createCDPSession();
-      await cdpSession.send('Profiler.enable');
-      await cdpSession.send('Profiler.start');
+      await cdpSession.send("Profiler.enable");
+      await cdpSession.send("Profiler.start");
     }
 
     try {
@@ -470,7 +583,7 @@ module.exports.createInstance = async ({
             window.config.setAssetLoadTimeout(timeout);
           } else {
             console.error(
-              'setAssetLoadTimeout function is not defined in the client.',
+              "setAssetLoadTimeout function is not defined in the client.",
             );
           }
         }, args[1].assetLoadTimeout);
@@ -481,18 +594,21 @@ module.exports.createInstance = async ({
             window.config.setFontLoadTimeout(timeout);
           } else {
             console.error(
-              'setFontLoadTimeout function is not defined in the client.',
+              "setFontLoadTimeout function is not defined in the client.",
             );
           }
         }, args[1].fontLoadTimeout);
       }
-      if (args[1]?.htmlTextRenderEnabled || args[1]?.richTextEnabled) {
+      // `htmlTextRenderEnabled`, `richTextEnabled` and `renderTagTextEnabled` options
+      // are no-op since polotno 4 - the new text rendering engine is always on.
+      // They are still accepted for backwards compatibility.
+      if (args[1]?.legacyRichTextEnabled) {
         await page.evaluate(() => {
-          if (window.config && window.config.setRichTextEnabled) {
-            window.config.setRichTextEnabled(true);
+          if (window.config && window.config.setLegacyRichTextEnabled) {
+            window.config.setLegacyRichTextEnabled(true);
           } else {
             console.error(
-              'setRichTextEnabled function is not defined in the client.',
+              "setLegacyRichTextEnabled function is not defined in the client.",
             );
           }
         });
@@ -503,7 +619,7 @@ module.exports.createInstance = async ({
             window.config.setTextVerticalResizeEnabled(true);
           } else {
             console.error(
-              'setTextVerticalResizeEnabled function is not defined in the client.',
+              "setTextVerticalResizeEnabled function is not defined in the client.",
             );
           }
         });
@@ -514,14 +630,14 @@ module.exports.createInstance = async ({
             window.config.unstable_setTextSplitAllowed(true);
           } else {
             console.error(
-              'unstable_setTextSplitAllowed function is not defined in the client.',
+              "unstable_setTextSplitAllowed function is not defined in the client.",
             );
           }
         });
       }
       if (args[1]?.onProgress) {
         const originalProgress = args[1].onProgress;
-        await page.exposeFunction('onProgress', async (progress, frameTime) => {
+        await page.exposeFunction("onProgress", async (progress, frameTime) => {
           originalProgress(progress, frameTime);
         });
       }
@@ -537,7 +653,7 @@ module.exports.createInstance = async ({
             window.config.setTextOverflow(overflow);
           } else {
             console.error(
-              'setTextOverflow function is not defined in the client.',
+              "setTextOverflow function is not defined in the client.",
             );
           }
         }, args[1].textOverflow);
@@ -549,7 +665,7 @@ module.exports.createInstance = async ({
           });
         } else {
           console.error(
-            'onLoadError function is not defined in the client. Error handling will not work.',
+            "onLoadError function is not defined in the client. Error handling will not work.",
           );
         }
       });
@@ -558,7 +674,7 @@ module.exports.createInstance = async ({
 
       // Stop profiler and save profile if enabled
       if (cdpSession && profilePath) {
-        const { profile } = await cdpSession.send('Profiler.stop');
+        const { profile } = await cdpSession.send("Profiler.stop");
         fs.writeFileSync(profilePath, JSON.stringify(profile));
         console.log(`CPU profile saved to: ${profilePath}`);
       }
@@ -579,13 +695,13 @@ module.exports.createInstance = async ({
     } catch (e) {
       // Stop profiler and save profile even on error
       if (cdpSession && profilePath) {
-        console.log('saving profile');
+        console.log("saving profile");
         try {
-          const { profile } = await cdpSession.send('Profiler.stop');
+          const { profile } = await cdpSession.send("Profiler.stop");
           fs.writeFileSync(profilePath, JSON.stringify(profile));
           console.log(`CPU profile saved to: ${profilePath}`);
         } catch (profileError) {
-          console.error('Failed to save profile:', profileError.message);
+          console.error("Failed to save profile:", profileError.message);
         }
       }
 
@@ -634,12 +750,12 @@ module.exports.createInstance = async ({
 
   const jsonToGIFBase64 = async (json, attrs) => {
     const url = await jsonToGIFDataURL(json, attrs);
-    return url.split('base64,')[1];
+    return url.split("base64,")[1];
   };
 
   const jsonToImageBase64 = async (json, attrs) => {
     const url = await jsonToDataURL(json, attrs);
-    return url.split('base64,')[1];
+    return url.split("base64,")[1];
   };
 
   const jsonToPDFDataURL = async (json, attrs) => {
@@ -661,12 +777,12 @@ module.exports.createInstance = async ({
 
   const jsonToPDFBase64 = async (json, attrs) => {
     const url = await jsonToPDFDataURL(json, attrs);
-    return url.split('base64,')[1];
+    return url.split("base64,")[1];
   };
 
   const jsonToBlob = async (json, attrs) => {
     const base64 = await jsonToImageBase64(json, attrs);
-    const blob = Buffer.from(base64, 'base64');
+    const blob = Buffer.from(base64, "base64");
     return blob;
   };
 
@@ -705,11 +821,11 @@ module.exports.createInstance = async ({
 
           // For video export, we always use 'resize' text overflow mode
           // to ensure text fits properly in animations. User preferences are ignored for now.
-          window.config.setTextOverflow('resize');
+          window.config.setTextOverflow("resize");
 
           if (!window.__polotnoLoadVideoExport) {
             throw new Error(
-              'Video export module loader is not defined in the client. Expected window.__polotnoLoadVideoExport().',
+              "Video export module loader is not defined in the client. Expected window.__polotnoLoadVideoExport().",
             );
           }
 
@@ -772,7 +888,7 @@ module.exports.createInstance = async ({
           ) {
             const end = Math.min(offset + CHUNK_SIZE, uint8Array.length);
             const chunk = uint8Array.slice(offset, end);
-            let binary = '';
+            let binary = "";
             for (let i = 0; i < chunk.length; i++) {
               binary += String.fromCharCode(chunk[i]);
             }
@@ -786,7 +902,7 @@ module.exports.createInstance = async ({
           ...attrs,
           exposeFunctions: {
             __polotnoWriteChunk: (base64Chunk) => {
-              const buffer = Buffer.from(base64Chunk, 'base64');
+              const buffer = Buffer.from(base64Chunk, "base64");
               writeStream.write(buffer);
             },
           },
@@ -794,13 +910,13 @@ module.exports.createInstance = async ({
       );
 
       writeStream.end();
-      await new Promise((resolve) => writeStream.on('finish', resolve));
+      await new Promise((resolve) => writeStream.on("finish", resolve));
 
       // Convert audio to AAC if needed
       if (isFfmpegAvailable()) {
         const codec = getAudioCodec(outputPath);
-        if (codec && codec !== 'aac') {
-          const tempPath = outputPath + '.tmp.mp4';
+        if (codec && codec !== "aac") {
+          const tempPath = outputPath + ".tmp.mp4";
           convertAudioToAac(outputPath, tempPath);
           await fs.promises.rename(tempPath, outputPath);
         }
@@ -820,8 +936,8 @@ module.exports.createInstance = async ({
     try {
       const mimeType = await jsonToVideoFile(json, tempPath, attrs);
       const buffer = await fs.promises.readFile(tempPath);
-      return `data:${mimeType || 'video/mp4'};base64,${buffer.toString(
-        'base64',
+      return `data:${mimeType || "video/mp4"};base64,${buffer.toString(
+        "base64",
       )}`;
     } finally {
       await fs.promises.rm(tempPath, { force: true });
@@ -836,7 +952,7 @@ module.exports.createInstance = async ({
     try {
       await jsonToVideoFile(json, tempPath, attrs);
       const buffer = await fs.promises.readFile(tempPath);
-      return buffer.toString('base64');
+      return buffer.toString("base64");
     } finally {
       await fs.promises.rm(tempPath, { force: true });
     }
@@ -861,7 +977,12 @@ module.exports.createInstance = async ({
     jsonToVideoBase64,
     jsonToVideoFile,
     createPage: async () =>
-      await module.exports.createPage(browser, visitPage, requestInterceptor),
+      await module.exports.createPage(
+        browser,
+        visitPage,
+        requestInterceptor,
+        useFontCache,
+      ),
   };
 
   createdInstances.push(instance);
@@ -874,7 +995,7 @@ const closeAllInstances = async () => {
 };
 
 // Also handle other termination signals
-['SIGINT', 'SIGTERM', 'SIGQUIT', 'exit', 'exit'].forEach((signal) => {
+["SIGINT", "SIGTERM", "SIGQUIT", "exit", "exit"].forEach((signal) => {
   process.on(signal, () => {
     closeAllInstances();
   });

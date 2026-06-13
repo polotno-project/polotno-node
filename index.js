@@ -147,6 +147,7 @@ module.exports.createInstance = async ({
   browserArgs = [],
   browser,
   requestInterceptor,
+  useFontCache,
 } = {}) => {
   return await createInstance({
     browser: browser || (await createBrowser({ browserArgs })),
@@ -155,5 +156,6 @@ module.exports.createInstance = async ({
     useParallelPages,
     browserArgs,
     requestInterceptor,
+    useFontCache,
   });
 };

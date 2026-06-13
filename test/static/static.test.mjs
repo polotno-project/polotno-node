@@ -22,7 +22,7 @@ if (fs.existsSync(diffDir)) {
   fs.rmSync(diffDir, { recursive: true });
 }
 // Ensure output directories exist
-[outputDir, currentDir, diffDir].forEach((dir) => {
+[outputDir, currentDir, diffDir, goldensDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }

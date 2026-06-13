@@ -9,7 +9,12 @@ declare module 'polotno-node' {
     pixelRatio?: number;
     assetLoadTimeout?: number;
     fontLoadTimeout?: number;
+    /** @deprecated no-op since polotno 4 — the new text engine is always on; use legacyRichTextEnabled to restore the old renderer */
     htmlTextRenderEnabled?: boolean;
+    /** @deprecated no-op since polotno 4 — the new text engine is always on; use legacyRichTextEnabled to restore the old renderer */
+    richTextEnabled?: boolean;
+    /** Use the legacy (pre polotno 4) rich text renderer */
+    legacyRichTextEnabled?: boolean;
     textVerticalResizeEnabled?: boolean;
     textSplitAllowed?: boolean;
     textOverflow?: string;
@@ -63,6 +68,8 @@ declare module 'polotno-node' {
     useParallelPages?: boolean;
     browserArgs?: string[];
     browser?: Browser;
+    /** Cache Google Fonts responses for the process lifetime and serve them to every page (default: true) */
+    useFontCache?: boolean;
   }
 
   // Polotno Node Instance

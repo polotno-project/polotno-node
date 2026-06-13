@@ -71,6 +71,14 @@ const instance = await createInstance({
   // see "Custom Browser Arguments" section for more details
   browserArgs: ['--custom-arg'],
 
+  // useFontCache - cache Google Fonts responses (in memory + on disk in the
+  // OS temp folder, shared across processes) and serve them to every page.
+  // Every page starts with an empty HTTP cache, so without it each render
+  // re-downloads the same fonts and bursts of parallel renders may get
+  // throttled by Google Fonts (fonts time out and text falls back to a
+  // default font). Default is true.
+  useFontCache: true,
+
   // requestInterceptor - optional function to intercept and modify network requests
   // Useful when you need to:
   // - Modify headers like User-Agent to access protected image resources
@@ -283,31 +291,23 @@ Timeout for loading fonts. By default it is 6000ms.
 const url = await instance.jsonToPDFDataURL(json, { fontLoadTimeout: 10000 });
 ```
 
-### `attrs.richTextEnabled`
+### `attrs.legacyRichTextEnabled`
 
-Enable rich text renderin. By default it is `false`.
+Use the legacy (pre polotno 4) rich text renderer. By default it is `false` — the new text rendering engine is always on.
 
 ```js
 const url = await instance.jsonToPDFDataURL(json, {
-  richTextEnabled: true,
+  legacyRichTextEnabled: true,
 });
 ```
+
+### `attrs.richTextEnabled` (deprecated)
+
+⚠️ **Deprecated:** No-op since polotno 4 — the new text rendering engine is always enabled. The option is still accepted, but it does nothing. Use `legacyRichTextEnabled` if you need the old renderer.
 
 ### `attrs.htmlTextRenderEnabled` (deprecated)
 
-⚠️ **Deprecated:** Use `richTextEnabled` instead. This property is maintained for backward compatibility and works as a fallback.
-
-```js
-// Old (deprecated)
-const url = await instance.jsonToPDFDataURL(json, {
-  htmlTextRenderEnabled: true,
-});
-
-// New (recommended)
-const url = await instance.jsonToPDFDataURL(json, {
-  richTextEnabled: true,
-});
-```
+⚠️ **Deprecated:** No-op since polotno 4, same as `richTextEnabled`.
 
 ### `attrs.textVerticalResizeEnabled`
 

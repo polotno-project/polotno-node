@@ -16,3 +16,4 @@ tmp
 *-current.mp4
 test/output
 *.cpuprofile
+.puppeteer-cache
